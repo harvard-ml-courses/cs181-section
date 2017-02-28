@@ -1,0 +1,845 @@
+\documentclass[12pt,letterpaper]{article}
+
+\usepackage{amsmath,amsfonts,amssymb,bbm}
+\usepackage{palatino}
+\usepackage[linkcolor=blue]{hyperref}
+\usepackage{fullpage}
+\usepackage{color}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage[textsize=tiny]{todonotes}
+\usepackage{multirow}
+\usepackage{todonotes}
+\usepackage{common}
+
+\newcommand{\TODO}[1]{\todo[inline]{#1}}
+\newcommand{\R}{\mathbbm{R}}
+\newcommand{\mba}{\mathbf{a}}
+\newcommand{\mbb}{\mathbf{b}}
+\newcommand{\mbx}{\mathbf{x}}
+\newcommand{\mbxt}{\tilde{\mathbf{x}}}
+\newcommand{\Sigmat}{\tilde{\Sigma}}
+\newcommand{\mbz}{\mathbf{z}}
+\newcommand{\mbw}{\mathbf{w}}
+\newcommand{\eps}{\epsilon}
+\newcommand{\Ut}{\tilde{U}}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\newcommand{\angstrom}{\textup{\AA}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\var}{\mathrm{var}}
+\newcommand{\cov}{\mathrm{cov}}
+\newcommand{\p}{\partial}
+\newcommand{\1}{\mathbbm{1}}
+\newcommand{\on}{\operatorname}
+
+\renewcommand{\v}[1]{\boldsymbol{\mathbf{#1}}}
+
+\begin{document}
+
+\begin{center}
+\LARGE{CS 181 Review Session for Midterm 1}
+\end{center}
+
+\noindent
+\textbf{Note}: We have covered a lot of difficult (but really cool) material so far this semester. It's easy to find yourself in the following situation: you feel that you've learned lots of interesting stuff, and then all of the sudden you feel embarrassed because you have missed some ``easy" concept that comes up. This happens all the time, to people that have studied this field seriously. That said, please free to ask any questions that come to mind during the review, and we expect that you will maintain a comfortable environment such that everyone feels good about asking questions.\\
+
+\noindent
+This review sheet has 3 sections:
+\begin{itemize}
+    \item A list of topics particularly relevant to the exam
+    
+    \item An in-depth walk-through of the concepts that we have covered so far this semester
+    
+    \item a glossary of terms
+\end{itemize}
+
+
+\begin{center}
+\huge{Exam-Relevant Topic List}
+\end{center}
+
+\noindent 
+The best way to prepare for the midterm is to review the lecture
+slides, two theory psets, section notes, and example midterm
+questions.  Make sure that you understand the most important concepts.
+These are generally the topics that are covered in detail in lecture.\\
+
+\noindent 
+The midterm will be conceptual and analytical, testing ideas and
+understanding, and does not involve writing pseudocode. {\em The
+  material from Lecture 10 (Thursday 2/23) and Lecture 11 Tuesday
+  (2/28) are NOT covered in this midterm.}\\
+  
+\noindent
+You are not expected to memorize complicated formulas such as the PDF
+for a Gaussian distribution or
+Beta distribution, complicated matrix cookbook rules, but you should
+be familiar with methods of probability theory (e.g., Bayes rule) and
+the various models we've studied so far in the course.\\
+
+\noindent 
+Here is a brief list of topics that you could expect to be asked about. This list emphasizes the main focus areas and is not fully
+inclusive:
+
+\begin{itemize}
+\item Non-parametric regression vs parametric regression
+\item Linear regression: least squares loss, solving analytically
+\item Generative model of linear regression, gradients,
+maximum likelihood estimation  (you can assume we 
+wouldn't ask you to push through a major derivation 
+without giving you some help)
+\item Basis functions (general idea, not specific versions)
+\item Use of validation for model selection and to
+avoid over-fitting
+\item Bias-variance tradeoff (not full derivation, but understanding)
+\item The role and mathematical form of major types of regularization. Particularly when used with linear regression problems
+%
+\item Idea of ensemble methods
+\item Bayesian methods: terminology (e.g.,
+  ``posterior''), MAP, posterior predictive,
+use of conjugate distributions (Beta/Bernoulli, Normal-Normal), 
+interpretation of estimators, Bayesian linear regression
+(you can assume we 
+wouldn't ask you to push through a major derivation 
+without giving you some help).
+Idea of posterior predictive Bayesian LR. [Bayesian model
+selection is out of scope.]
+%
+\item Binary, linear classification. Least squares vs 
+perceptron (or ``hinge'') loss. Gradient descent for perceptron loss
+(and the perceptron algorithm.)
+\item Decision boundaries, linear and non-linear separators
+\item Generative classification, via class probability
+and class conditional distributions (Gaussian and
+multinomial Naive Bayes). Use of MLE, loss function
+via negative log likelihood. [Bayesian Multinomial Naive
+Bayes is out of scope.]
+\item Metrics: the idea of TP, FP, FN, TN, ROC curve / AUC, Precision, Recall. 
+[we wouldn't expect
+you to remember the F1-score defn, or the TPR or FPR defns.]
+\item Generative vs.~discriminative, probabilistic
+models of classification. Logistic regression model,
+and MLE, gradient descent via chain rule.  [We wouldn't expect
+you to remember the formula for the sigmoid, or derivative
+of the sigmoid.] Multi-class classification via softmax.
+\item Role of loss functions (and activations) in defining algorithms
+  for machine learning, stochastic gradient descent (gradients
+  with respect to single examples)
+\item Neural nets: adaptive non-linear basis functions, 
+basic notation for weights in layers, use of sigmoid
+activation, use for non-linear separators, role of
+network architectures (no need to
+memorize different activation functions)
+\item Use of neural nets for both classification and regression.
+Finding gradients on weights using the chain rule.
+[We wouldn't expect
+you to remember the formula for the sigmoid, or derivative
+of the sigmoid.] High level
+idea of  back-propagation. Idea of weight sharing,
+convolutional nets.
+%
+\end{itemize}
+
+
+
+
+
+
+\newpage
+
+\begin{center}
+\huge{Walkthrough of Concepts}
+\end{center}
+
+\section{Vector Calculus}
+
+\subsection{Differentiation}
+You should be familiar with single-variable differentiation, including properties like
+\begin{align*}
+\text{Chain rule: } & \frac{d}{d x} f(g(x))= f'(g(x))g'(x)\\
+\text{Product rule: }& \frac{d}{d x} f(x)g(x) = f'(x)g(x) + f(x)g'(x)\\
+\text{Linearity: }& \frac{d}{d x} (af(x) + bg(x)) = af'(x) + bg'(x)
+\end{align*}
+
+\noindent 
+The multivariate case is similar, but now we consider the partial derivative of each pair of input and output dimensions and end up with a matrix:
+
+\begin{align*}
+\frac{\p \mathbf{f}(\mathbf{x})}{\p \mathbf{x}} = \begin{bmatrix}
+\frac{\p f_1(\mathbf{x})}{\p x_1} & \cdots & \frac{\p f_m(\mathbf{x})}{\p x_1} \\
+\vdots & \ddots & \vdots \\
+\frac{\p f_1(\mathbf{x})}{\p x_n} & \cdots & \frac{\p f_m(\mathbf{x})}{\p x_n}
+\end{bmatrix}
+\end{align*}
+
+\noindent 
+(A partial derivative is just like the single-variable derivative, where you treat each variable except the one you're differentiating with respect to as a constant.)
+
+You are not expected to know everything from the matrix cookbook, but you should know the basic formulas such as
+$$\frac{\partial}{\partial \boldw} (\boldw^\top \boldx) = \boldx$$
+
+\subsection{Gradient Vector}
+If $f$ is scalar-valued, its derivative is a column vector we call the gradient vector:
+$$
+     \frac{\partial f(\mathbf{x})}{\partial \mathbf{x}}=\begin{bmatrix}
+         \frac{\p f(\mathbf{x})}{\p x_1} \\
+         \frac{\p f(\mathbf{x})}{\p x_2} \\
+         ... \\
+         \frac{\p f(\mathbf{x})}{\p x_n}
+        \end{bmatrix}
+$$
+
+\noindent 
+The gradient vector points in the direction of steepest ascent in $f(\mathbf{x})$. This is useful for optimization.\\
+
+\noindent 
+Recall that the local extrema of a single-variable function can be found by setting its derivative to 0. The same is true here, using the condition $\frac{\partial\mathbf{f}(\mathbf{x})}{\partial \mathbf{x}}=\mathbf{0}$. 
+However, this equation is often intractable. We can search for local minima numerically using \textbf{gradient descent}:
+We start with an initial guess $\mathbf{w}_0$, and then at each step $i$ we update our guess by going in the direction of greatest descent (opposite the direction of the gradient vector)
+\begin{align*}
+\mathbf{w}_{i+1} = \mathbf{w}_i - \eta \frac{\partial f(\mathbf{w})}{\partial \mathbf{w}}
+\end{align*}
+where $\eta$ is a learning rate. We stop when the value of the gradient is close to 0. 
+
+
+
+% \subsection{Joint Distributions}
+% A joint distribution is a distribution over 2 or more random variables. For example, say you have the variables $X$ and $Y$. The joint distribution is the function $p(x,y) = p(X=x, Y=y)$. When given a joint distribution, it is common to want to ``marginalize'' one or more of the variables. To do this, we use the ``sum'' rule, which is that
+
+% \begin{align*}
+%   p(x) &= \sum_{y \in \mathcal{Y}} p(x, y) \\
+%   p(x) &= \int_{\mathcal{Y}} p(x,y) dy
+% \end{align*}
+
+% \noindent 
+% where the first equation is for discrete random variables, and the second for continuous variables.
+
+
+\subsection{Bayes' Theorem} 
+This is a central theorem that we will use repeatedly in this course, and is an extension of the product rule. 
+
+\begin{align*}
+  p(x | y) &= \frac{p(y | x) p(x)}{p(y)}
+\end{align*}
+Since we are conditioning on $y$, $y$ is held constant, and that means $p(y)$ is just a normalization constant. As a result, we often write the above property as
+
+\begin{align*}
+  p(x | y) \propto p(y | x) p(x)
+\end{align*}
+
+\noindent 
+To see this concretely in terms of machine learning: say we observe data $D$, and we are interested in parameters $\boldw$.  We can write the \emph{posterior distribution} of the parameters given data by by using Bayes' theorem.
+\begin{align*}
+  \underbrace{p(\boldw | D)}_{\text{posterior}}
+    &= \frac{\overbrace{ p(D | \boldw) }^{\text{likelihood}} 
+       \overbrace{ p(\boldw) }^{\text{prior}}}
+       {\underbrace{p(D)}_{\text{evidence}}}
+\end{align*}
+
+\noindent Related to this, a maximum a posteriori (MAP) estimate for the parameter $\boldw$ is the value \[\argmax_\boldw p(\boldw | D) = \argmax_\boldw p(D | \boldw)p(\boldw) \] 
+A maximum likelihood estimate (MLE) is the value \[\argmax_{\boldw}p(D|\boldw)\]
+Note that the MLE does not require any sort of prior, while the MAP takes the prior into account.
+
+
+\bigskip
+
+
+\section{High Level Overview of Machine Learning}
+Broadly speaking, in supervised machine learning, we are focused on using existing data, which generally has inputs and outputs, to make prediction about new inputs. This generally plays out with two types of problems: regression, where we are trying to predict an element in $\mathbb{R}$, and classification, in which we are trying to predict a class label for an input. We will cover other types of machine learning, including unsupervised learning and reinforcement learning later, so stay tuned!
+
+Now, we divide supervised machine learning further. In non-parametric models, we generally keep our training data when we make predictions, since we are not learning parameters from the training data (hence the ``non''). A classic example of this is K-nearest neighbors. Generally, the way KNN works is at test time, given an input $\mathbf{x}$, we find the $k$ training data points that are closest to $\mathbf{x}$, and use their output values to make our prediction.
+
+Naturally, this can be problematic if our data is enormous, as it is often is. Thus, this semester, we have focused on \textbf{parametric supervised machine learning} models. In these models, there are generally two stages:
+
+\begin{enumerate}
+    \item Learn a set of parameters, which we generally call $\mathbf{\theta}$ from the training data. Note that $\mathbf{\theta}$ may be literally one matrix, as is the case in logistic regression, or a set of matrices and other parameters, as is the case in neural networks, or naive bayes. Generally speaking, we will represent the parameters as $\mathbf{\theta}$, though we often use $\mathbf{W}$, since these parameters are usually weights.
+    \item Use the $\mathbf{\theta}$ from the previous stage to make predictions on new data points. Note that we did not need to store all of the data to make predictions - just the parameters.
+\end{enumerate}
+
+\section{Linear Regression}
+
+The simplest model for regression involves a linear combination of the input variables:
+\begin{align}
+    h(\mathbf{x};\mathbf{w})= w_1x_1+w_2x_2+\ldots+w_mx_m = \sum_{j=1}^m w_jx_j = \mathbf{w}^\top\mathbf{x}
+\end{align}
+where $x_j \in \mathbb{R}$ for $j \in \{1,\hdots,m\}$ are the features, $\mathbf{w} \in \mathbb{R}^m$ is the weight parameter, with $w_1 \in \mathbb{R}$ being the bias parameter.
+(Recall the trick of letting $x_1 = 1$ to merge bias.)
+
+\subsection{Linear Basis Function Regression}
+We allow $h(\mathbf{x};\mathbf{w})$ to be a non-linear function of the input vector $\mathbf{x}$, while remaining linear in $\mathbf{w} \in \mathbb{R}^d$:
+\begin{align}
+    h(\mathbf{x};\mathbf{w})= \sum_{j=1}^{d}w_j\phi_j(\mathbf{x})
+    =\mathbf{w}^\top\mathbf{\bphi}(\mathbf{x})
+\end{align}
+where $\phi_j(\mathbf{x}) : \mathbb{R}^m \rightarrow \mathbb{R}^d$ denotes the $j$th term of $\bphi(\mathbf{x})$. To merge bias, we define $\phi_1(\mathbf{x})=1$.
+% In many practical applications, if original data variables comprise $\mathbf{x}$, then the features can be expressed in terms of the basis functions $\{\phi_j{\mathbf{x}}\}$.
+
+\subsection{Least squares Loss Function}
+\begin{align}
+    \mcL(\mathbf{w}) &=\dfrac{1}{2}\sum_{i=1}^n\left(y_i-\mathbf{w}^\top\mathbf{x}_i\right)^2\\
+    \mathbf{w}^* &= (\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{X}^\top\mathbf{y} = \argmin_{\mathbf{w}} \mcL(\mathbf{w})
+\end{align}
+where $\mathbf{X} \in \reals^{n \times m}$, where each row is one data point (i.e. one feature vector) and each column represents values of a given feature across all the data points.\\
+
+% Exercise: derive $\mathbf{w}^*$ for linear regression using non-matrix form and matrix form differentiation.
+% \vspace{8cm}
+
+\subsection{Regularized Least Squares}
+To penalize complexity, we add a regularization term to the error function. The total error function becomes:
+\begin{align}
+    \mcL(\mathbf{w})&= \dfrac{1}{2}\sum_{i=1}^n\left(y_i-\mathbf{w}^\top\mathbf{x}_i\right)^2 + \dfrac{\lambda}{2}\mathbf{w}^\top\mathbf{w}
+\end{align}
+This is known as \textit{Ridge} regression, or $L^2$ regularization, since we are adding the $L^2$ norm of the weights to the loss. This is analytically solvable (see the section notes), and our final estimator is given as:
+\begin{align}
+    \mathbf{w}^* = (\lambda\mathbf{I}+\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{X}^\top\mathbf{y}
+\end{align}
+Another common form of regularization is \textit{Lasso}, or $L^1$ regularization (since we take the $L^1$ norm of the weights). In this case the error function looks like:
+\begin{align}
+    \mcL(\mathbf{w})&= \dfrac{1}{2}\sum_{i=1}^n\left(y_i-\mathbf{w}^\top\mathbf{x}_i\right)^2 + \lambda \left\lVert\boldw\right\rVert
+\end{align}
+Unfortunately there's no analytic closed form solution to lasso regression, and you can see that the loss under lasso regression is \emph{not} differentiable everywhere, so we need another tactic for optimizing it. Coordinate ascent or subgradients are the usual method, but we don't ask you to know about them.
+
+\subsection{Bayesian Linear Regression}
+
+In Bayesian Linear Regression, we make a key observation: rather than picking the MLE or MAP estimates for $\mathbf{w}$, we can model the entire distribution over them. Then, we can use the entire distribution over them to make predictions. \\
+
+\noindent
+Why is this useful? Well, imagine a situation in which the probability density assigned to different values of $\mathbf{w}$ is fairly uniform, with one value $\mathbf{w}^*$ being marginally higher than all of the rest. If we learn just $\mathbf{w}^*$ (though MAP estimation for example), and use just that to make our predictions, we are throwing away information about all of the other possible $\mathbf{w}$ that also carried substantial probability density.\\
+
+\noindent 
+So, rather than picking a particular $\mathbf{w}^*$, we are going to try to model the posterior probability density function of $\mathbf{w}$ itself, and then use the full posterior to make predictions. Let $D = \{(\mathbf{x}_i, y_i)\}_{i=1}^n$, $\mathbf{x}_i \in \mathbb{R}^m$, $y_i \in \mathbb{R}$. Consider the generative model
+\begin{align}
+y_i \sim \mathcal{N}(\mathbf{w}^\top \mathbf{x}_i, \beta^{-1})
+\end{align}
+
+\noindent The likelihood of the data has the form:
+\begin{align}
+    p(\mathbf{y}|\mathbf{X},\mathbf{w}) = \mathcal{N}(\mathbf{y}|\mathbf{X}\mathbf{w},\beta^{-1}\mathbf{I})
+\end{align}
+
+\noindent Put conjugate prior on the weights as (assume precision $\beta^{-1}$ known):
+\begin{align}
+    p(\mathbf{w}) = \mathcal{N}(\mathbf{w}|\mathbf{m}_0, \mathbf{S}_0)
+\end{align}
+
+\noindent We want a posterior distribution on $\mathbf{w}$ by using Bayes's Theorem, which states that:
+\begin{align}
+    p(\mathbf{w}|D) \propto p(D|\mathbf{w})p(\mathbf{w})
+\end{align}
+
+\noindent It turns out (see practice question from section) that our posterior after $n$ examples is also Gaussian:
+\begin{align}
+    p(\mathbf{w} | D)=\mathcal{N}(\mathbf{w}|\mathbf{m}_n, \mathbf{S}_n)
+\end{align}
+\noindent where
+\begin{align}
+\mathbf{S}_n &= \left(\mathbf{S}_0^{-1} + \beta \mathbf{X}^\top\mathbf{X}\right)^{-1}\\
+\mathbf{m}_n &= \mathbf{S}_n(\mathbf{S}_0^{-1}\mathbf{m}_0 + \beta \mathbf{X}^\top\mathbf{y})
+\end{align}
+
+
+\subsection{Posterior Predictive Distributions}
+
+So, now we can model the entire posterior distribution over $\mathbf{w}$. This sounds great, but now we have lost a nice property of MAP and MLE: we no longer have a $\mathbf{w}^*$ that we can use to make predictions. Remember, in our summary of parametric supervised machine learning, we stated that the whole point of this process is ultimately to make predictions on new data points. However, we now just have a distribution over $\mathbf{w}$, and cannot simply plug that in to make predictions on new data points. So, since we have a distribution over $\mathbf{w}$ - meaning a probability density for every possible value for $\mathbf{w}$ - we need some way to incorporate all of this information to actually make predictions. To do this, we will essentially use some calculus, and integrate over every possible value of $\mathbf{w}$. This is also called marginalization.\\
+
+\noindent
+Let $\mathbf{x}$ denote a new data point. Marginalizing over $\mathbf{w}$, we have that
+\begin{align}
+p(y| \mathbf{x}, D) &= \int_{\mathbf{w}} p(y|\mathbf{x}, \mathbf{w})p(\mathbf{w} | D) d\mathbf{w}\\
+&= \int_{\mathbf{w}} \mathcal{N}(y|\mathbf{w}^\top\mathbf{x}, \beta^{-1}) \mathcal{N}(\mathbf{w}|\mathbf{m}_n, \mathbf{S}_n) d\mathbf{w} 
+\end{align}
+
+\noindent Since each of the terms on the right hand side follows a normal distribution, we can use some math (see lecture 5, slide 33) to find that
+\begin{align}
+p(y| \mathbf{x}, D) = \mathcal{N}(y| \mathbf{x}^\top\mathbf{m}_n, \mathbf{x}^\top\mathbf{S}_n\mathbf{x} + \beta^{-1})
+\end{align}
+
+\noindent
+This is a nice result. We have shown that when we marginalize over $\mathbf{w}$, we can make predictions on new data points $\mathbf{x}$. Moreover, the output values follow a nice normal distribution with easy-to-calculate parameters.
+
+
+\section{Model Selection}
+Model selection is methods for choosing between models: how do you know that your model is \emph{correct}?
+
+\subsection{Validation}
+Suppose we have a model for our data $p(\boldy|\boldX, \boldw, \alpha)$ (with parameters $\boldw$ and some hyperparameter $\alpha$), such that we can evaluate its performance on some dataset $\boldX, \boldy$ using a loss function $\mathcal{L}$.
+% If we have a good method for tuning the parameter $\theta$, then we can find the minimizer $\argmin_\theta \mcL(\textbf{y}, p(y|\boldX, \alpha, \theta))$ easily.
+If we can't minimize with respect to $\alpha$ very easily (for example, if it's the regularization coefficient or the number of layers in our neural network), then we have try some values of $\alpha$ to find the best. However, we'd like to compare using different values with a useful metric, so we compare the models using \textbf{validation set} loss. 80/20 train/validation is a common split for our data. The more validation data we use, the lower the variance in our estimate of the generalization error, but we might prefer to use more data for training our model.
+
+\subsection{Cross Validation}
+If we want to avoid the tradeoff above, we can use \textbf{cross validation} to estimate our generalization error. In \textbf{K-fold cross validation} we split the data into $K$ pieces, and sequentially estimate our generalization error by training on $K - 1$ pieces and measuring error on the remaining piece. Then we average over all choices of the left-out piece to get our final estimate. This is primarily used when there's not a lot of data, but training is cheap (since in $K$-fold cross validation we need to train $K$ times), for example in linear models on small datasets.
+
+\subsection{Bias-Variance Decomposition}
+One of the limitations of statistical modeling is that as we increase the complexity of our models, they tend to \textbf{overfit}. Overfitting is when a model has poor generalization ability, so it tends to do well on the training set but has high error outside. Usually overfitting is caused by fitting to noise rather than signals in the data.
+
+The bias-variance decomposition explains this phenomenon. There are two sources of error: \textbf{bias}, which is an inability to capture the signal, and \textbf{variance}, or error introduced from our choice of training data. Specifically,
+
+\begin{align}
+\text{generalization error} = \underbrace{\text{systematic error}}_{\text{bias}} + \underbrace{\text{sensitivity of prediction}}_{\text{variance}}
+\end{align}
+In mathematical terms, if we have random data $D$, new input $\boldx \in \mcX$ with target $y \in \reals$ generated conditional on $\boldx$, conditional mean $\bar{y} = \mathbb{E}[y | \boldx]$, a model $h_D : \mcX \to \reals$, and prediction mean $\bar{h}(\boldx) = \mathbb{E}_D[h_D(\boldx)]$, we can write the generalization error
+
+\begin{align}
+\mathbb{E}_{D, y|\boldx}[(y - h_D(\boldx))^2] = \underbrace{\mathbb{E}_{y | \boldx}[(y - \bar{y})^2]}_{\text{noise}} + \underbrace{(\bar{y} - \bar{h}(\boldx))^2}_{\text{bias squared}} + \underbrace{\mathbb{E}_D[(\bar{h}(\boldx) - h_D(\boldx))^2]}_{\text{variance}}
+\end{align}
+
+\noindent 
+As we increase model complexity, the bias (usually) goes down (because we can model the signal better) and the variance goes up (because we can model randomness in $D$ better). One way we can control what kind of model we use (simple or complex) is to use \textbf{regularization}, which penalizes complex models. 
+
+\subsection{Bagging}
+\textbf{Bagging} (also confusingly called \emph{bootstrap aggregation}) is an ensemble method used to decrease the variance of estimators. Given a model, we can train multiple copies of the model on subsets of our data (taken by sampling from the original dataset with replacement) and then build a new model that averages together the predictions from the components. Since the entire model has seen all the data, it doesn't increase bias, but it can decrease variance, because unreasonable predictions (from overfitting to a subset) are outweighed by the other models.
+
+Bagging is best for models that already have low bias and high variance, i.e. complex models like decision trees and neural networks. One disadvantage of bagging: your model becomes $n$ times more expensive (both to train and the use!), where $n$ is the number of bagged estimators you use. For expensive models like neural networks this is a serious issue, but for cheap models like decision trees it's not a problem.
+
+\subsection{Boosting}
+\textbf{Boosting} is a technique for turning a weak estimator (high bias) into a strong one by reducing bias. Essentially, we train first weak learner on the dataset, then we reweight the training set by increasing the weight assigned to those examples that were misclassified by the first model. Then we repeat that process a number of times until our performance stops increasing. For prediction, we take the weighted average of weaker learners, where the weights are based on each one's classification accuracy on the training set. This reduces bias by training later models to focus only on "hard" examples.
+
+In practice this tends to actually reduce bias, but not really decrease variance. Also, on some noisy data sets boosting can lead to decreased performance. There are many boosting algorithms, but AdaBoost is the first, and often studied. 
+
+\section{Classification}
+
+In classification, we predict a class label for a new observation from the output space of $c$ discrete classes:
+
+\begin{align}
+\mcY = \{C_1,...,C_c\}
+\end{align}
+
+\noindent 
+The output is represented either as a single integer like $y = 2$, or a one-hot vector with a $1$ in the index corresponding to the correct class, and zero elsewhere:
+
+\begin{align}
+[0,1,0,0,0,...]  
+\end{align}
+
+
+\noindent 
+A classifier partitions the input space of observation features with decision boundaries/surfaces such as lines, hyperplanes, or spheres. We have explored linear and probabilistic \textbf{discriminative} approaches and \textbf{generative} approaches for both binary and multiclass classification. In the discriminative approach, we model the conditional
+$p(y | \mathbf{x}, \mathbf{W})$ (where $\mathbf{W}$ refers to model parameters). In the generative approach we model the joint $p(y,\mathbf{x})$ by way of intermediately modeling $p(y)$ and $p(\mathbf{x} | y)$.
+
+\subsection{Linear Discriminative Classification}
+
+
+We directly model $p(y|\mathbf{x},\mathbf{w})$, where $\mathbf{w}$ are the model parameters. In the case of \textbf{Binary Linear Classification}, we are interested in a discriminative function:
+
+\begin{align}
+h(\mathbf{x}; \mathbf{w}, w_0)   
+\end{align}
+
+\noindent that directly assigns each observation $\mathbf{x}$ to a positive or negative class. A simple choice is:
+
+\begin{align}
+   \mathbf{w}^\top\mathbf{x} + w_0 
+\end{align}
+
+\noindent 
+where $h(\mathbf{x}; \mathbf{w}, w_0) = 0$ is the decision boundary. This classifier predicts $\hat{y} = 1$ if $h(\mathbf{x}; \mathbf{w}, w_0) > 0$ and $\hat{y} = -1$ otherwise. If $\mathbf{x} \in \mathbb{R}^d$, then the decision boundary is a $(d-1)$ dimensional hyperplane.\\
+
+\noindent 
+In linear classification, the data must be \textbf{linearly separable} for a classifier to be able to predict without error. Separability can sometimes be helped through the use of basis functions.\\
+
+\subsection{Probabilistic Discriminative Models}
+
+\subsubsection{Binary Class Logistic Regression}
+
+\noindent
+Be careful not to equate "probabilistic" and "generative". We can have probabilistic discriminative models. Consider the binary classification setting. Allow the log probability to be proportional to a linear model $h$:
+
+\begin{align}
+    \ln p(y = 1 | \mathbf{x};\mathbf{w}) \propto \mathbf{w}^\top\mathbf{x} + w_0 = h
+\end{align}
+
+\noindent
+Threshold the class $1$ prediction at $h > 0$ as in the linear model. Now exponentiate:
+
+\begin{align}
+  p(y = 1 | \mathbf{x};\mathbf{w}) = \frac{\exp(h)}{\exp(h)+\exp(0)} = (1 + \exp(-h))^{-1} 
+\end{align}
+\begin{align}
+   p(y = 0 | \mathbf{x};\mathbf{w}) = \frac{\exp(0)}{\exp(h)+\exp(0)} = (1 + \exp(h))^{-1} 
+\end{align}
+
+
+
+
+\noindent 
+We have derived the logistic sigmoid activation, which squashes $\mathbb{R}$ to probabilities:
+\begin{align}
+    \sigma(h) = (1 + \exp(-h))^{-1}
+\end{align}
+
+\noindent
+We now have a discriminative form for the conditional probabilities:
+
+\begin{align}
+   p(y = 1 | \mathbf{x};\mathbf{w}) = \sigma(\mathbf{w}^\top\mathbf{x} + w_0) 
+\end{align}
+\begin{align}
+   p(y = 0 | \mathbf{x};\mathbf{w}) = 1 - \sigma(\mathbf{w}^\top\mathbf{x} + w_0) 
+\end{align}
+
+
+
+\noindent
+We can now pose a loss function:
+\begin{align}
+    \mathcal{L}(\mathbf{w}) &= -\sum_{i=1}^n \ln p(y_i | \mathbf{x}_i; \mathbf{w}) = -\sum_{i=1}^n \ln \bigg(\sigma(h)^{y_i}(1 - \sigma(h))^{1 - y_i}\bigg) \\
+&= \sum_{i=1}^n y_i \ln(1 + \exp(-h)) + (1 - y_i)\ln(1 + \exp(h))
+\end{align}
+where $y_i$ is the true class of input $\boldx_i$, expressed as 0 or 1. Note that the $y_i$ and $(1 - y_i)$ multipliers/exponents are just tricks to cancel out the term we don't care about.
+
+
+\noindent 
+Having written down the loss, we can now take the gradients with respect to the weights and optimize via Gradient Descent. \textbf{Really important: Note that although we are taking a probabilistic approach, we are avoiding modeling} $p(\mathbf{x},y)$ \textbf{but are instead directly computing the conditional}  $p(y|\mathbf{x};\mathbf{w})$ \textbf{by optimizing on} $\mathbf{w}$.\\
+
+\noindent
+Taking the derivative with respect to $\mathbf{w}$:
+
+\begin{align}
+  \frac{\partial}{\partial \boldw} \ln(1+\exp(-h)) = -\boldx_i \frac{\exp(-h)} {1+\exp(-h)} = -\boldx_i p(y_i=0|\boldx;\mathbf{w})
+\end{align}
+\begin{align}
+  \frac{\partial}{\partial \boldw} \ln(1+\exp h) = \boldx_i \frac{\exp(h)}{1+\exp(h)} =  \boldx_i  p(y_i =1| \boldx;\mathbf{w})
+\end{align}
+so that we get
+\begin{align}
+\frac{\partial}{\partial \boldw} \mcL(\boldw) = \sum_{i=1}^n
+     -y_i \boldx_i p(y_i=0|\boldx_i;\mathbf{w}) + 
+     (1-y_i) \boldx_i p(y_i=1|\boldx_i;\mathbf{w})
+\end{align}
+
+
+\subsubsection{Multiclass Logistic Regression}
+
+\noindent 
+This was covered on your homework. Now we learn a separate weight vector $\mathbf{w}_k$ for the $k$th class.
+
+\begin{align}
+p(\boldy = C_k| \boldx; \{ \boldw_{\ell}\}_{\ell =1}^c) = \frac{\exp(\boldx^\top \boldw_k  )}{\sum_{\ell} \exp(\boldx^\top \boldw_{\ell})}
+\end{align}
+
+\noindent
+We can also write the vector of probabilities as
+\begin{align}
+\on{softmax}([\boldx^\top \boldw_1, \ldots, \boldx^\top \boldw_c]) = \left[\frac{\exp(\boldx^\top \boldw_1  )}{\sum_{\ell} \exp(\boldx^\top \boldw_{\ell})}, \ldots, \frac{\exp(\boldx^\top \boldw_c  )}{\sum_{\ell} \exp(\boldx^\top \boldw_{\ell})} \right]
+\end{align}
+Sometimes you may see $\mathbf{w}_k^\top\mathbf{x}$ referred to as activation $\mathbf{z}_k$, so that we are taking the softmax of activations $[\boldz_1, \ldots, \boldz_c]$ and $softmax(\mathbf{z})_k$ is the probability that our observation $\mathbf{x}$ is assigned the class $k$.
+
+\subsection{Generative Classification Approach}
+
+As stated above, we model $p(\mathbf{x},y)$ by modeling:
+
+\begin{align}
+p(y) \textrm{ and } p(\mathbf{x}|y)
+\end{align}
+
+\noindent
+where class $y$ is generated with $p(y)$ and input $\mathbf{x}$ is generated conditional on the class with probability $p(\mathbf{x} | y)$. In the binary case, the class prior for classes $\{0,1\}$ can be modeled by by the Bernoulli distribution:
+
+\begin{align}
+p(y;\theta) = \theta^y(1 - \theta)^{1 - y}
+\end{align}
+
+\noindent 
+where $\theta = p(y = 1)$. Notice that the exponents are just a convenient notation that cancels out the term for the class that we are not considering. In the multiclass case, we can specify a vector $\boldsymbol{\pi}$ as the prior so that
+
+\begin{align}
+p(y = C_k ; \boldsymbol{\pi}) = \pi_k
+\end{align}
+
+
+\subsubsection{Naive Bayes + Discrete Features}
+
+\noindent 
+\textbf{Naive Bayes} is one example of a generative classification model that we have covered. It works for both binary and multiclass classification and is used in the case of discrete feature counts. Let's consider \textbf{Multinomial Binary Class Naive Bayes} (multiclass is a simple generalization to make once the binary case is made concrete). \\
+
+\noindent 
+Remember that a \textbf{multinomial distribution} is a generalization of the Binomial to multiple categories. While we flip a coin in the Binomial setting, we roll a $d$-sided die in our case many times to observe a sample $\mathbf{x} = (x_1, \ldots, x_d)^\top$ with $x_j$ discrete integers. Here, the vector $\boldx$ is a histogram over features (dice rolls).\\
+
+\noindent
+Specifically, assume that given class $y$, we have probabilities $$\boldsymbol{\beta}_y = (\beta_{y1}, \beta_{y2}, \ldots , \beta_{yd})$$
+of rolling each side of the die. \\
+
+
+\noindent 
+In Multinomial Binary Class Naive Bayes, we can estimate $\boldsymbol{\beta}_0$ and $\boldsymbol{\beta}_1$ with MLE. This means that we take all observations belonging to class $0$, treat each as a vector of counts over features, and sum them together. Then we normalize to get a class $0$ distribution over features. We do the same for class $1$. (Exercise: write down the math for how you would do this.) \\
+
+\noindent
+We also estimate priors $\pi_0 = p(y = 0)$ and $\pi_1 = p(y = 1)$ by counting the proportion of the whole data set that falls under each class. Finally, we consider the likelihood of a new observation $\mathbf{x}$ against our model for class $y$ by considering:
+
+\begin{align}
+p(y | \boldx) \propto p(y)p(\mathbf{x}|y) \propto \pi_y \bigg(\prod_{j=1}^d (\beta_{yj})^{x_j}\bigg)
+\end{align}
+
+\noindent
+where $x_j$ is observation $\mathbf{x}$'s count for the $j^{th}$ feature. We make our prediction by choosing the class that maximizes this quantity. The generalization to more than 2 classes follows the same steps (exercise: write down the math). \\
+
+\noindent Notice that Naive Bayes becomes a linear classifier when expressed in log-space:
+
+\begin{align}
+\ln \pi_y + \sum_{j=1}^dx_j \ln(\beta_{yj}) = w_0 +  (\mathbf{w}_y)^\top\mathbf{x}
+\end{align}
+
+\noindent 
+where $(\mathbf{w}_y)_j = \ln(\beta_{yj})$ and $w_0 = \ln \pi_y$.\\
+
+
+\textbf{Example:} You would like to classify whether a book is written by a Good Author or a Bad Author. You believe that Good Authors tend to use certain collections of words (using each word with a certain frequency relative to the others), and that Bad Authors use their words differently. You have a large collection of books whose author quality (Good / Bad, as determined by Sasha Rush) is already known.\\
+
+\noindent
+First, we need to estimate how common Good Authors and Bad Authors are in the first place. Let $\pi_{good}$ be the proportion of books written by Good Authors in your collection. Let $\pi_{bad}$ be the proportion of bad authors in your collection.\\
+
+\noindent 
+Next, we need the class conditional distribution over features. Here, every word in the shared vocabulary among all authors is our set of features. Treating each book as a histogram of word counts, we add together all histogram vectors for books written by Good Authors, and then we normalize to form a Good Author distribution over words. Call this $\boldsymbol{\beta}_{good}$. We do the same for Bad Authors and find $\boldsymbol{\beta}_{bad}$.\\
+
+\noindent
+For some new book $\mathbf{x}$ with word counts $x_j$ for the $j^{th}$ word in the vocabulary, we compute the probability that $\mathbf{x}$ was written by a Good Author:
+\begin{align}
+p(good | \boldx) \propto \pi_{good} \bigg(\prod_{j=1}^d (\beta_{good, j})^{x_j}\bigg)
+\end{align}
+We do the same for Bad Author, and classify $\mathbf{x}$ with whatever class maximized this probability. \\
+
+\noindent
+Note that, had we taken a discriminative approach, we would have needed to invent weights $\mathbf{w}$ and $w_0$ and optimize for them. Having first told a probabilistic story, we were able to find closed forms for the parameters. Both discriminative and generative approaches have their own advantages.\\
+
+\noindent
+NB: We are not limited to using MLE for the $\boldsymbol{\beta}_y$ and $\pi_y$ probabilities above, but instead we can include priors and use MAP. We can use prior-likelihood conjugate pairs like Beta-Bernoulli for the class probability and Dirichlet-Multinomial for the class conditional feature probabilities. It turns out that using priors in this setting amounts to adding pseudo counts for certain classes or features, which can help with rare or unseen classes and features.
+
+\subsubsection{Gaussians + Continuous Features}
+
+One example of a generative classification model for continuous features are the Gaussian Generative Models from homework 2. We are still interested in:
+\begin{align}
+     p(y)p(\mathbf{x}|y)
+\end{align}
+
+Now, our conditionals are different Gaussians depending on the class:
+\begin{align}
+    p(\mathbf{x}|y = 0) &= \mathcal{N}(\mathbf{x}|\boldsymbol{\mu}_0,\boldsymbol{\Sigma}_0) \\
+p(\mathbf{x}|y = 1) &= \mathcal{N}(\mathbf{x}|\boldsymbol{\mu}_1,\boldsymbol{\Sigma}_1)
+\end{align}
+
+and our priors on classes are
+\begin{align}
+    p(y = 0) = \frac{N_0}{N}, \quad p(y = 1) = \frac{N_1}{N} 
+\end{align}
+
+\noindent
+where $N_0$ and $N_1$ are the number of training examples in classes $0$ and $1$ respectively. We make a prediction on a new observation by choosing the class that maximizes $p(y)p(\mathbf{x}|y)$.
+
+
+
+\section{Gradient Descent}
+
+Gradient descent is a general method for optimizing functions. In the context of machine learning, if we have parameter vector $\boldw$ and a loss function $\mcL$, we want to find the value of $\boldw$ such that $\mcL$ is minimized.
+
+Formally, if we have model (e.g. logistic regression) $y = f(\boldx; \boldw)$, data points $\{(\boldx_i, y_i)\}_{i=1}^N$ with loss $\mcL = \sum_{i=1}^N \mcL(f(\boldx_i; \boldw), y_i)$, we perform a gradient update as
+
+\begin{align}
+   \boldw \gets \boldw - \eta \frac{\partial \mcL}{\partial \boldw} 
+\end{align}
+where $\eta$ is the learning rate.\\
+
+\noindent
+\textbf{Stochastic gradient descent} is more commonly used in practice. Instead of computing gradient of entire loss, we compute
+  stochastic gradients:
+
+  \begin{enumerate}
+  \item Sample data point $i$, corresponding to $(\boldx_i, y_i)$
+  \item Compute loss and gradient for just that data point $\mcL^{(i)}(\boldw)$
+  \item Update $\boldw$ based on this \textit{stochastic gradient} 
+  \end{enumerate}
+ 
+  Similar to standard gradient descent, often more efficient in 
+  practice. 
+
+
+\section{Perceptron}
+
+The perceptron is a simple linear model for binary classification. We have as before $h(\boldx; \boldw, w_0) = \boldw^\top \boldx + w_0$, where we classify an input $\boldx$ as positive if $h(\boldx) > 0$ and negative otherwise.\\
+
+\noindent 
+To train this model, we use the ReLU activation function:
+\begin{align}
+    f_{\operatorname{RELU}}(x) = \max(x, 0)
+\end{align}
+The loss over our training set $(\boldx_i, y_i)$, where $y_i = +1$ for positive data points and $y_i = -1$ for negative, is:
+\begin{align}
+  \mcL = \sum_{i=1}^N f_{\operatorname{RELU}}(-y_i h(\boldx_i))  
+\end{align}
+
+This loss allows us to take gradients easily: the stochastic gradient update is simply:
+
+\begin{align}
+    \boldw \gets \boldw + y_i\boldx_i
+\end{align}
+
+if $y_i$ is incorrectly classified, and no update otherwise.
+
+The perceptron is the simplest example of a neural network. 
+
+\section{Neural Networks}
+
+Neural networks are complex models based on the idea of stacking multiple levels of computation on top of each other. One simple example of a neural network is \emph{multi-layer perceptron} (MLP), which is just multiple perceptrons connected in a row. For example, for binary classification, we can use the following (2 layer) MLP:
+
+\begin{align}
+    h(\boldx; \boldW^1, \boldw_0^1, \boldw, w_0) = \boldw^\top f_{\operatorname{RELU}}(\boldW^1 \boldx + \boldw_0^1) + w_0    
+\end{align}
+
+Note that above, if $\boldx \in \R^{d}$, we have a matrix $\boldW^1 \in \R^{h \times d}$, where $h$ is the number of \emph{hidden units} (so called because they're neither the input of the network nor the output). Then $\boldw \in \R^{h}$. We can think of this as $h$ individual units (the rows of $\boldW^1$) calculating their inner product with $x$, and then getting combined by $\boldw$. 
+
+% diagram would be good here
+
+More generally, we can think of neural networks as extremely flexible, tunable functions. For example, we can make a neural network that takes an input $\boldx$ (e.g. a document encoded to a vector somehow) to a vector of class probabilities, and use that for classification. Or we could take $\boldx$ (e.g. an image) and map it to a decimal, which could be a score.
+
+\subsection{Backpropagation}
+
+How do we adapt these functions? Well, after we've defined a loss function (which, in the case of classification can be negative log-likelihood, or in regression can be sum of squared error), we use the \emph{backpropagation algorithm} to get the gradient of the loss for gradient descent. This is simply an application of the chain rule from calculus.
+
+If we have a loss function $\mcL(h(\boldx), y)$ for a data point $(\boldx, y)$, as defined above (hereafter just abbreviated as $\mcL$), then we can think of our calculation in the forward direction as being the sequence of steps:
+\begin{align}
+    \boldg &:= \boldW^1 \boldx + \boldw_0^1 \\
+    \bphi &:= f_{\operatorname{RELU}}(\boldg)\\
+    h &:= \boldw^\top \bphi + w_0 \\
+    \mcL &:= f_{\operatorname{RELU}}(-y \cdot h) \\
+    &= - \mathbbm{1}_{\{-y \cdot h > 0\}} y \cdot h
+\end{align}
+which we call the \emph{forward pass}. Then, we can calculate the gradients with respect to each parameter by using those stored calculations:
+\begin{align}
+    \frac{\partial \mcL}{\partial \boldw} &= \frac{\partial \mcL}{\partial h} \cdot \frac{\partial h}{\partial \boldw} \\
+        &= \left(\mathbbm{1}_{\{-y h > 0\}} -y\right) \cdot \bphi \\
+    \frac{\partial \mcL}{\partial w_0} &= \frac{\partial \mcL}{\partial h} \cdot \frac{\partial h}{\partial w_0} \\
+        &= \left(\mathbbm{1}_{\{-y h > 0\}} -y\right) \cdot \left(1\right) \\
+    \frac{\partial \mcL}{\partial \boldw_j^1} &= \frac{\partial \mcL}{\partial h} \cdot \frac{\partial h}{\partial \bphi} \cdot \frac{\partial \bphi}{\partial \boldg} \cdot \frac{\partial \boldg}{\partial \boldw_j^1} \\
+        &= \left(\mathbbm{1}_{\{-y h > 0\}} -y \right) \cdot \mathbbm{1}_{\{\bphi > 0\}} \cdot  \boldw^\top \cdot x_jI \quad \forall j = 1,\ldots,d \\
+    \frac{\partial \mcL}{\partial \boldw_0^1} &= \frac{\partial \mcL}{\partial h} \cdot \frac{\partial h}{\partial \bphi} \cdot \frac{\partial \bphi}{\partial \boldg} \cdot \frac{\partial \boldg}{\partial \boldw_0^1} \\
+        &= \left(\mathbbm{1}_{\{-y h > 0\}} -y \right) \cdot \mathbbm{1}_{\{\bphi > 0\}} \cdot \boldw^\top \cdot I
+\end{align}
+where $\boldw_j^1$ is the $j$th row of $\boldW^1$.
+
+The notation $\mathbbm{1}_{A}$ (if you haven't seen it before) means 1 if $A$ is true, otherwise 0. We call this the \emph{backwards pass} because the order in which we calculate gradients is the last parameter first, then backwards through the model. Notice how in our expressions for the gradients, we have a lot of shared computation: in fact, the first term in each product is the same! The gradients in the first layer ($\boldW^1, \boldw_0^1$) share the term $\partial h / \partial \boldg$ -- the gradient of the second layer by the first. 
+
+The key trick is to store the intermediate calculations in the forward pass, and use those to calculate gradients in the backwards pass. In practice all of the above loops and indicator functions are rolled into matrix multiplications, so this efficient.
+
+\section{Activation Functions + Adaptive Basis Functions} \label{activation}
+If instead of using a ReLU activation function we had used a sigmoid function $\sigma$, then the last layer of our MLP above would have just become logistic regression, since then our neural network function is $\sigma(\boldW^1 \boldx + \boldw_0^1)$. This is a very convenient endpoint for calculating multiclass probabilities (since that's what we use multiclass logistic regression for), but since backpropogation is a general technique, we can use any activation function to build our network. Some common functions are $\sigma, \tanh, \on{ReLU}$, as well as many other variants.
+
+There are a few ways to compare their behavior, though not much formal theory. For example, for the $\sigma$ (sigmoid) activation function, it has the tendency to kill gradients when the input is too large or too negative, which makes it not very robust. The same is true for $\tanh$. However, for the $\on{ReLU}$ activation, because the gradient is 0 whenever the input is negative, it's possible for the neuron to essentially "die", getting stuck at a negative value if the learning rate is too high, which can mean your network won't train at all.\\
+
+\noindent 
+What's adaptive about these basis functions is that the weights and bias are tuned through the training process. The final layer can treat the rest of the network as $\boldsymbol{\phi}(\mathbf{x})$, where $\boldsymbol{\phi}$ are basis functions adapted through training for the particular problem to be solved.
+
+\subsection{Shared Weights}
+
+Neural networks quickly reach a large number of parameters, especially as we add more and more layers. This can cause overfitting problems.
+
+One solution is to have weights shared between different features $\phi_j$. An example is the \emph{convolution} operator, where our first transformation matrix might look something like
+
+  \[ \boldW^1 =
+  \begin{bmatrix}
+    w_1 & w_2 &  w_3 & 0 &\ldots & & & 0\\
+    0 & w_1 & w_2 & w_3 & 0  & \ldots& &  0\\
+    0 & 0 & w_1 & w_2 & w_3 & 0 & \ldots & 0\\
+    \vdots \\ 
+    &\ldots && 0 & w_1 & w_2 & w_3 & 0 \\
+    && \ldots&  & 0 & w_1 & w_2 & w_3 \\
+  \end{bmatrix}
+\] 
+
+where $w_1, w_2, w_3$ are the only 3 weights.
+
+\section{Metrics}
+
+In binary classification we can sometimes frame our problem as predicting a yes/no or positive/negative result. This comes up in applications like banking fraud, anomaly detection, and medical diagnostics.\\
+
+\noindent 
+Let $TP$ mean \# of true positives, correctly classified $1$'s. Let $TN$ mean \# of true negatives, correctly classified $0$'s. Let $FP$ mean \# false positives, true $0$'s that were classified as $1$'s. Let $FN$ mean \# false negatives, true $1$
+s that were classified as $0$
+s. In what settings might you be more okay with false positives than false negatives?\\
+
+\noindent 
+Precision:
+
+\begin{align}
+ Precision = \frac{TP}{TP + FP}
+\end{align}
+
+\noindent 
+True Positives Rate (also called Recall):
+
+\begin{align}
+TPR = \frac{TP}{TP+FN}
+\end{align}
+
+\noindent 
+False Positives Rate:
+\begin{align}
+FPR = \frac{FP}{FP + TN}
+\end{align}
+
+
+\noindent 
+\textbf{ROC/AUC}: Construct a graph by placing $FPR$ on the $x$-axis and $TPR$ on the $y$-axis.
+Holding constant a specific hyperparameter $\alpha$, your model is a single point on this graph. As you let the parameter $\alpha$ range over a set of values, your model is represented by a set of points on this graph. By connecting the points into a curve (called ROC), we can evaluate the area underneath. This can be used to quantify the predictive power of a binary classification model. This is called the Area Under Curve (AUC).
+
+
+
+
+\begin{center}
+\huge{Glossary}
+\end{center}
+
+
+\begin{itemize}
+    \item Activation Function: A function that applies an element-wise non-linearity to its inputs. Generally does not have any parameters of its own. (\ref{activation})
+    \begin{itemize}
+        \item Sigmoid: $\sigma(x) = 1/(1 + e^{-x})$
+        \item Rectified Linear Unit: $f(x) = \max\{0, x\}$
+        \item Tanh: $\tanh(x) = (e^x - e^{-x})/(e^x + e^{-x})$
+    \end{itemize}
+    \item Basis Function: A basis function is a function $f: \mathbb{R}^{b} \to \mathbb{R}^d$. Generally, basis functions are used to map inputs into a new vector space where they have desirable properties (such as linearity for regression, or linear separation of classes for classification). One example of a basis function is a function in your code that extracts tags from a document, for example.
+    \item Perceptron: A simple binary classification model that uses the sign of a linear function of the input as its label predictions.
+    \item Regression: A model to calculate a function of the input data in a continuous space, e.g. a value in $\R^2$.
+    \item Classification: A model to calculate a function of the input data that is in a discrete space, e.g. a color, or virus type.
+    \item Optimization
+    \begin{itemize}
+    \item Loss Function: In order to do any optimization, we have to have a way to measure the difference between the predictions from our model, and the true output values from the training data. The function that calculates this difference is called the Loss Function. Generally, in all optimization tasks, we want to minimize the value of the loss function.
+    \item Gradient: The vector of partial derivatives of a function with respect to some set of variables. The gradient vector points in the direction of greatest increase, and has a norm equal to the slope. 
+    \item Gradient Descent: An algorithm for finding the argmin of a function by moving in the direction of steepest descent (i.e. opposite the gradient).
+    \end{itemize}
+    % \item Probability
+    % \begin{itemize}
+    % \item Discrete Random Variable: A random variable that takes on only discrete values, e.g.  a dice roll. It has an associated \emph{probability mass function} which is \emph{not} differentiable, and has a total sum of 1.
+    % \item Continuous Random Variable:  A random variable which takes on values in a continuous range. It has an associated \emph{probability density function} which has a total integral of 1.
+    % \end{itemize}
+    % \item Distributions
+    % \begin{itemize}
+    % \item Probability Distribution: roughly speaking, a function from a space of events $\mathcal{F}$ to the corresponding probability of that event. For continuous distributions, the associated value is a probability \emph{density} rather than a true probability. Often, the space of events is the set of values that a random variable can take on.
+    % \item Conditional Distribution: The probability distribution over a random variable given the value of another random variable. Note that in most cases the distribution of $Y \mid X$ should contain the value of $X$ as an input (i.e. the distribution is different when $X$ varies). 
+    % \item Joint Distribution: The probability distribution over all pairs of possible values for two random variables, e.g. $p(x, y)$.
+    % \end{itemize}
+    \item Bayesian Inference
+    \begin{itemize}
+    \item Likelihood: The likelihood of an observation $\mathbf{x}$ given a model parametrized by $\theta$ is written $p(\mathbf{x} | \theta)$. For understanding generative approaches, it's important to consider this as the extent to which our model could have generated our data.
+    \item Prior: A distribution that expresses one's beliefs about a random variable before any evidence is collected. Usually we try to use very wide, flat priors indicating that we don't know very much, but sometimes we use the prior to indicate that we know that a variable is inside some range: e.g. the prior distribution on a coin flip probability only has a support on $[0, 1]$ indicating that we know with certainty that it is inside that range.
+    \item Posterior: The posterior for model parameter $\theta$ represents our belief over the value of $\theta$ after we have seen our data $D$. It is written as $p(\theta|D)$.\\ $p(\theta|D) \propto p(\mathbf{x}|\theta)p(\theta)$.
+    \item Bayes Rule: This is the central statistical property that we use all the time in this class. 
+    $$p(x, y) = p(x \mid y)p(y) = p(y \mid x)p(x) \implies \frac{p(y \mid x)}{p(y)} = \frac{p(x \mid y)}{p(x)}$$
+    In practice for our purposes, we usually write it as $p(y | x) \propto p(x | y)p(y) = p(x, y)$. In other words, conditional probabilities are proportional to joint probabilities.
+    \item Posterior Predictive: a distribution over new data points that marginalizes (i.e. integrates over all possible values) out the parameter of interest. 
+    \item MLE: The Maximum Likelihood Estimator for a parameter $\theta$ is the value of $\theta$ that maximizes the likelihood $p(D|\theta)$.
+    \item MAP: The MAP Estimator for a parameter $\theta$ is the value of $\theta$ that maximizes the posterior $p(\theta|D)$.
+    \end{itemize}
+    \item Softmax: A function that takes a vector of scores or activations and maps them to a probability distribution (i.e. so that the sum of the values is 1):
+    $$\on{softmax}(\mathbf{z}) = \left[\frac{e^{z_1}}{\sum_{k = 1}^K e^{z_k}}, \ldots, \frac{e^{z_K}}{\sum_{k = 1}^K e^{z_k}}\right]$$
+    \item Least Squares: Loss function for regression of the form 
+    $$\mcL = \sum_{i=1}^N (h(\boldx_i) - y_i)^2$$
+    \item Cross Validation: Breaking a dataset into $k$ chunks for model selection, where for each chunk, we use $k-1$ of the chunks for training and the remaining for validation.
+    \item Discriminative vs Generative Model: When trying to predict $y$ from $\boldx$, we can either model the joint $p(y, \boldx)$ (generative model) or only $p(y | \boldx; \theta)$ (discriminative model) where $\theta$ are model parameters.
+    
+\end{itemize}
+
+
+
+\end{document}
+
+
+    

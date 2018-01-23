@@ -10,7 +10,7 @@
 % harvardml.cls and common.sty
 
 \course{CS181-s18}
-\assignment{CS181 Section \#0 Notes, v 1.0}
+\assignment{CS181 Section \#0 Notes, v1.1}
 \duedate{never}
 
 \usepackage{url, enumitem}
@@ -157,7 +157,7 @@
             \begin{align*}
                 a\big(\frac{1}{||\v v||}\v v\big) = 
                 \frac{\langle \v u, \v v \rangle}
-				{\langle \v v, \v v \rangle}
+				{\langle \v v, \v v \rangle} \v v
             \end{align*}
         \noindent This has the properties that $\langle \v u - \v p,
 		\v p \rangle = \v 0$ and $\v u = \v p$ if and only if $\v u$ 
@@ -648,7 +648,7 @@
 	
 		\noindent Similarly, we can define \textbf{conditional variance} as
 		\begin{align*}
-			var(X|Y) = \E[(X - \E[X|Y]^{2}) | Y] = \E[X^2|Y] + \E[X|Y]^2
+            var(X|Y) = \E[(X - \E[X|Y])^2 | Y] = \E[X^2|Y] - \E[X|Y]^2
 		\end{align*}
 		
 		\noindent \textbf{Adam's law} (law of iterated expectations) gives

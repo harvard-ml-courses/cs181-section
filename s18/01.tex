@@ -1,0 +1,237 @@
+\documentclass[11pt,letterpaper]{article}
+
+\usepackage{common}
+\usepackage{amsmath,amsfonts,amssymb,bbm}
+\usepackage{palatino}
+\usepackage[linkcolor=blue]{hyperref}
+\usepackage{fullpage}
+\usepackage{color}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage[textsize=tiny]{todonotes}
+\newcommand{\TODO}[1]{\todo[inline]{#1}}
+\newcommand{\R}{\mathbbm{R}}
+\newcommand{\mba}{\mathbf{a}}
+\newcommand{\mbb}{\mathbf{b}}
+\newcommand{\mbx}{\mathbf{x}}
+\newcommand{\mbxt}{\tilde{\mathbf{x}}}
+\newcommand{\Sigmat}{\tilde{\Sigma}}
+\newcommand{\mbz}{\mathbf{z}}
+\newcommand{\mbw}{\mathbf{w}}
+\newcommand{\eps}{\epsilon}
+\newcommand{\Ut}{\tilde{U}}
+\newcommand{\angstrom}{\textup{\AA}}
+\newcommand{\E}{\mathrm{E}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\p}{\partial}
+
+\begin{document}
+\begin{center}
+\LARGE{CS 181 Spring 2017 Section 1 Notes}\\
+(Linear Regression)
+\end{center}
+
+\section{Maximum Likelihood and Least Squares Regression}
+\subsection{Linear Regression}
+The simplest model for regression involves a linear combination of the input variables:
+\begin{align}
+    h(\mathbf{x};\mathbf{w})= w_1x_1+w_2x_2+\ldots+w_mx_m = \sum_{j=1}^m w_jx_j = \mathbf{w}^\top\mathbf{x}
+\end{align}
+where $x_j \in \mathbb{R}$ for $j \in \{1,\hdots,m\}$ are the features, $\mathbf{w} \in \mathbb{R}^m$ is the weight parameter, with $w_1 \in \mathbb{R}$ being the bias parameter.
+(Recall the trick of letting $x_1 = 1$ to merge bias.)
+
+\subsection{Least squares Loss Function}
+\begin{align}
+    \mcL(\mathbf{w}) &=\dfrac{1}{2}\sum_{i=1}^n\left(y_i-\mathbf{w}^\top\mathbf{x}_i\right)^2\\
+    \mathbf{w}^* &= (\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{X}^\top\mathbf{y} = \argmin_{\mathbf{w}} \mcL(\mathbf{w})
+\end{align}
+where $\mathbf{X} \in \reals^{n \times m}$, where each row is one data point (i.e. one feature vector) and each column represents values of a given feature across all the data points.\\
+\\
+Exercise: derive $\mathbf{w}^*$ for linear regression using non-matrix form and matrix form differentiation.
+\vspace{8cm}
+
+\subsection{Regularized Least Squares}
+To penalize complexity, we add a regularization term to the error function. The total error function becomes:
+\begin{align}
+    \mcL(\mathbf{w})&= \dfrac{1}{2}\sum_{i=1}^n\left(y_i-\mathbf{w}^\top\mathbf{x}_i\right)^2 + \dfrac{\lambda}{2}\mathbf{w}^\top\mathbf{w}
+\end{align}
+This is known as \textit{Ridge} regression.
+\begin{align}
+    \mathbf{w}^* = (\lambda\mathbf{I}+\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{X}^\top\mathbf{y}
+\end{align}
+Exercise: derive $\mathbf{w}^*$ for Lasso and Ridge regression using non-matrix form and matrix form differentiation.
+\vspace{8cm}
+
+\subsection{Linear Basis Function Regression}
+We allow $h(\mathbf{x};\mathbf{w})$ to be a non-linear function of the input vector $\mathbf{x}$, while remaining linear in $\mathbf{w} \in \mathbb{R}^d$:
+\begin{align}
+    h(\mathbf{x};\mathbf{w})= \sum_{j=1}^{d}w_j\phi_j(\mathbf{x})
+    =\mathbf{w}^\top\mathbf{\bphi}(\mathbf{x})
+\end{align}
+where $\phi_j(\mathbf{x}) : \mathbb{R}^m \rightarrow \mathbb{R}^d$ denotes the $j$th term of $\bphi(\mathbf{x})$. To merge bias, we define $\phi_1(\mathbf{x})=1$.
+% In many practical applications, if original data variables comprise $\mathbf{x}$, then the features can be expressed in terms of the basis functions $\{\phi_j{\mathbf{x}}\}$.
+
+\newpage
+\section{Practice Questions}
+\begin{enumerate}
+
+\item {\bf MLE Estimate of the Bias Term (Bishop (3.19))}\\
+\fbox{\parbox{\linewidth}{%
+Let $\mathbf{X} \in \reals^{n \times m}$ be our design matrix, $\mathbf{y}$ our vector of $n$ target values, $\mathbf{w}$ our vector of $m-1$ parameters, and $w_0$ our bias parameter. As Bishop notes in (3.18), the least squares error function of $\mathbf{w}$ and $w_0$ can be written as follows
+\begin{align*}
+    \mcL(\mathbf{w},w_0) = \frac{1}{2} \sum_{i=1}^n \left( y_i - w_0 - \sum_{j=1}^{m-1} w_j X_{ij} \right)^2.
+\end{align*} \\
+
+Show that the value of $w_0$ that minimizes $\mcL$ is
+\begin{align*}
+    w_{0}^* &= \frac{1}{n} \sum_{i=1}^n y_i - \frac{1}{n}\sum_{j=1}^{m-1} w_j \left( \sum_{i=1}^n X_{ij} \right) \\
+    &= \frac{1}{n} \left( \mathbf{y}^\top \mathbf{1} - \sum_{i=1}^{n} \mathbf{w}^\top \mathbf{x}_i\right)  \quad \quad \quad \text{[compare Bishop (3.19)]}
+    % &= \frac{1}{n}\sum_{i=1}^n \left( y_i - \sum_{j=1}^{m-1} w_j \mathbf{X}_{ij} \right) \quad \quad \quad \text{[compare Bishop (3.19)]}
+\end{align*}
+and justify the result intuitively.
+}}
+% % STAFF SOLUTION
+% We have that $\frac{\partial L}{\partial w_0} = -\sum_{i=1}^n (y_i - w_0 - \sum_{j=1}^{m-1} w_j X_{ij})$. 
+
+% Thus, we set $\sum_{i=1}^n y_i - nw_0 - \sum_{i=1}^n \sum_{j=1}^{m-1} w_j X_{ij} = 0$, and solving for $w_0$ gives the result.
+
+\newpage
+% \item {\bf Linear Regression With Differing Variances (Adapted from Stanford CS 229)}\\
+% %http://cs229.stanford.edu/materials/ps1sol.pdf
+% \fbox{\parbox{\linewidth}{%
+% Suppose we have a training set $\{\mathbf{x}_i\}_1^n$ of $n$ independent examples with corresponding target values $\{y_i\}_1^n$, but in which the $y_i$'s were observed with differing variances. Specifically, suppose that
+% \begin{align*}
+%     p(y_i|\mathbf{x}_i, \mathbf{w}) = \dfrac{1}{\sqrt{2\pi}\sigma_i}\exp{\left(-\dfrac{(y_i-\mathbf{w}^\top\mathbf{x}_i)^2}{2\sigma_i^2}\right)}
+% \end{align*}
+% i.e., $y_i$ has mean $\mathbf{w}^\top\mathbf{x}_i$ and variance $\sigma_i^2$ (where the $\sigma_i$'s are fixed, known constants). Show that finding the maximum likelihood estimate of $\mathbf{w}$ reduces to solving a weighted linear regression problem. State clearly what the $r_i$'s (weighting factors) are in terms of the $\sigma_i$'s. 
+% }}
+% \begin{align*}
+%     \argmax_{\mathbf{w}} \prod_{i=1}^n p(y_i|\mathbf{x}_i, \mathbf{w}) &= \argmax_{\mathbf{w}} \sum_{i=1}^{n}\log p(y_i|\mathbf{x}_i, \mathbf{w})\\
+%     &= \argmax_{\mathbf{w}} \sum_{i=1}^{n}\left(\log \dfrac{1}{\sqrt{2\pi}\sigma_i}-\dfrac{(y_i-\mathbf{w}^\top\mathbf{x}_i)^2}{2\sigma_i^2}\right)\\
+%     &=\argmax_{\mathbf{w}}-\sum_{i=1}^n\dfrac{(y_i-\mathbf{w}^\top\mathbf{x}_i)^2}{2\sigma_i^2}\\
+%     &=\argmin_{\mathbf{w}}\dfrac{1}{2}\sum_{i=1}^n \dfrac{1}{\sigma_i^2}(y_i-\mathbf{w}^\top\mathbf{x}_i)^2\\
+%     &=\argmin_{\mathbf{w}}\dfrac{1}{2}\sum_{i=1}^n r_i(y_i-\mathbf{w}^\top\mathbf{x}_i)^2
+% \end{align*}
+% where in the last step, we substituted $r_i=\dfrac{1}{\sigma_i^2}$ to get the linear regression form.
+
+% \newpage
+
+\item {\bf Maximum Likelihood for the Gaussian (Sequential Estimation of Parameters)}\\
+\fbox{\parbox{\linewidth}{%
+(a) We are given a data set $(\mathbf{x}_1, \ldots, \mathbf{x}_n)$ where each observation is drawn independently from a multivariate Gaussian distribution:
+
+\begin{align}
+\mathcal{N}(\mathbf{x}| \boldsymbol{\mu}, \mathbf{\Sigma}) = \dfrac{1}{|(2\pi)\mathbf{\Sigma}|^{1/2}}\exp\left(-\dfrac{1}{2}(\mathbf{x} - \boldsymbol{\mu})^\top\mathbf{\Sigma}^{-1}(\mathbf{x} - \boldsymbol{\mu})\right)
+\end{align}
+where $\boldsymbol{\mu}$ is a $m$-dimensional mean vector, $\mathbf{\Sigma}$ is a $m$ by $m$ covariance matrix, and $|\mathbf{\Sigma}|$ denotes the determinant of $\mathbf{\Sigma}$.\\
+\\
+Find the maximum likelihood value of the mean, $\boldsymbol \mu_{MLE}$.\\
+
+(b) Let $\boldsymbol \mu_{MLE}^{(n)}$ denote the maximum likelihood estimator of the mean based on $n$ observations. Show that
+\begin{align}
+\boldsymbol \mu_{MLE}^{(n)} = \boldsymbol \mu_{MLE}^{(n-1)} + \dfrac{1}{n}(\mathbf{x}_n - \boldsymbol \mu_{MLE}^{(n-1)})
+\end{align}
+}}
+
+% % STAFF SOLUTION
+% (a) The likelihood of all the data is 
+% \begin{align*}
+% \prod_{i=1}^n \mathcal{N}(\mathbf{x}_i| \boldsymbol{\mu}, \mathbf{\Sigma})
+% \end{align*}
+% Taking the log, we get that the log likelihood equals:
+% \begin{align*}
+% \log \prod_{i=1}^n \mathcal{N}(\mathbf{x}_i| \boldsymbol{\mu}, \mathbf{\Sigma}) 
+% &= \sum_{i=1}^n \log(\mathcal{N}(\mathbf{x}_i| \boldsymbol{\mu}, \mathbf{\Sigma})) \\
+% &= -\dfrac{nm}{2}\log(2\pi) - \dfrac{n}{2}\log(|\mathbf{\Sigma}|) -\dfrac{1}{2}\sum_{i=1}^n(\mathbf{x}_i - \boldsymbol{\mu})^\top\mathbf{\Sigma}^{-1}(\mathbf{x}_i - \boldsymbol{\mu})
+% \end{align*}
+% Taking the derivative with respect to $\boldsymbol{\mu}$ and setting it equal to 0, we get \begin{align*}
+% 0 = \dfrac{\partial}{\partial \boldsymbol{\mu}} \log p(\mathbf{X} |\boldsymbol{\mu}, \mathbf{\Sigma}) = \sum_{i=1}^n \mathbf{\Sigma}^{-1}(\mathbf{x}_i - \boldsymbol{\mu})
+% \end{align*}
+% and solving gives us that 
+% \begin{align*}
+% \boldsymbol{\mu}_{MLE} = \dfrac{1}{n}\sum_{i=1}^n \mathbf{x}_i
+% \end{align*}
+
+% (b) 
+% \begin{align*}
+% \boldsymbol \mu_{MLE}^{(n)} &= \dfrac{1}{n}\sum_{i=1}^n \mathbf{x}_i \\
+% &= \dfrac{1}{n}\mathbf{x}_i + \dfrac{1}{n}\sum_{i=1}^{n-1}\mathbf{x}_i\\
+% &= \dfrac{1}{n}\mathbf{x}_i + \dfrac{n-1}{n}\boldsymbol{\mu}_{MLE}^{(n-1)}\\
+% &= \boldsymbol \mu_{MLE}^{(n-1)} + \dfrac{1}{n}(\mathbf{x}_i - \boldsymbol \mu_{MLE}^{(n-1)})
+% \end{align*}
+
+% Intuition: When we observe a new data point, we revise our estimate by moving our previous estimate over in the direction of the error ($\mathbf{x}_n - \mathbf{\mu}_{MLE}^{(n-1)}$), but scaled by $\frac{1}{n}$ (since this is only one data point out of $n$ total ones).
+
+
+\newpage
+\item {\bf OLS on Augmented Data (HTF 3.12 \& MIT 6.867 Fall '12 Recitation Problems)}\\
+\fbox{\parbox{\linewidth}{%
+Let $\mathbf{X} \in \reals^{n \times m}$ be our design matrix and $\mathbf{y}$ be our vector of $n$ target values. Assume $\mathbf{X}$ and $y$ are both centered, that is assume the mean of each row is $0$. Let $\tilde{\mathbf{X}}$ be the $(n+m)$ by $m$ matrix formed by vertically stacking $\mathbf{X}$ on top of $\sqrt{\lambda}\mathbf{I}$, and let $\tilde{\mathbf{y}}$ be the $(n+m)$-length vector formed by vertically stacking $\mathbf{y}$ on top of a vector of $m$ zeros.\\
+That is, let $\tilde{\mathbf{X}} = \begin{bmatrix}
+X_{11} & \cdots & X_{1m} \\
+\vdots & \ddots & \vdots \\
+X_{n1} & \cdots & X_{nm} \\
+\sqrt{\lambda} & \cdots & 0 \\
+0 & \ddots & 0 \\
+0 & \cdots & \sqrt{\lambda}
+\end{bmatrix}$ and $\tilde{y} = \begin{bmatrix}
+y_1 \\
+\vdots \\
+y_n \\
+0 \\
+\vdots \\
+0
+\end{bmatrix}$.
+
+\begin{itemize}
+\item[(a)] Show that the least squares error function induced by viewing $\tilde{\mathbf{X}}$ as our design matrix and $\tilde{\mathbf{y}}$ as our target values can be written as \begin{align*}
+\frac{1}{2} \sum_{i=1}^{n} \left(y_i - \mathbf{w}^\top \mathbf{x}_i \right)^2 + \frac{\lambda}{2} \mathbf{w}^\top\mathbf{w}
+\end{align*}
+\item[(b)] Why is this cool?
+\end{itemize}
+}}
+
+% % STAFF SOLUTION
+% (a) We have 
+% \begin{align*}
+% \mcL &= \frac{1}{2} \sum_{i=1}^{n+m} (\tilde{y}_i - \mathbf{w}^\top \tilde{\mathbf{x}}_{i})^2 \\
+% &= \frac{1}{2} \sum_{i=1}^{n} \left(y_i - \mathbf{w}^\top \mathbf{x}_{i}\right)^2 + \sum_{i=1}^m (0 - w_k \sqrt{\lambda})^2 \\
+% &= \frac{1}{2} \sum_{i=1}^{n} \left(y_i - \mathbf{w}^\top \mathbf{x}_i \right)^2 + \lambda \mathbf{w}^\top\mathbf{w}
+% \end{align*}
+
+% We know from the previous question (and Bishop (3.19)) that this is the Ridge Regression error function (written with the bias parameter made explicit) exactly.
+
+% (b) We see that adding artificial zero-response data is equivalent to regularizing via Ridge Regression!
+
+% \newpage 
+% \item {\bf Deriving Lasso Regularization with Lagrange Multipliers }\\
+% \fbox{\parbox{\linewidth}{%
+% Show that minimization of the unregularized least squares error function given by 
+% \begin{align*}
+% \mcL_D(\mathbf{w}) = \frac{1}{2}\sum_{i=1}^n (y_i - \mathbf{w}^\top \phi(\mathbf{x}_i) )^2,
+% \end{align*}
+% subject to the constraint
+% \begin{align*}
+% \sum_{j = 1}^m |w_j| \leq \eta ,
+% \end{align*}
+% is equivalent to minimizing the regularized error function
+% \begin{align*}
+% \frac{1}{2} \sum_{i=1}^n (y_i - \mathbf{w}^\top \phi(\mathbf{x}_i) )^2 + \frac{\lambda}{2} \sum_{j=1}^m |w_j|
+% \end{align*}
+% }}
+
+% % Solution goes here
+% Rewrite the constraint as 
+% \begin{align*}
+% \sum_{j = 1}^m |w_j| - \eta \leq 0
+% \end{align*}
+
+% We get the Lagrangain function\footnote{When we have an inequality constraint like this, we actually need the Karush-Kuhn-Tucker (KKT) conditions, which are satisfied here. You won't need to know all the math behind these for this course, but you do need to know how to optimize functions under constraints using Lagrange multipliers, and this is a great example.} 
+% \begin{align*}
+% \mcL(\mathbf{w}, \lambda) = \frac{1}{2} \sum_{i=1}^n (y_i - \mathbf{w}^\top \phi(\mathbf{x}_i) )^2 + \frac{\lambda}{2} \left(\sum_{j=1}^m |w_j| - \eta\right)
+% \end{align*}
+
+% where we introduce the factor of $1/2$ in front of the second term for convenience. We see immediately that the above function is equal to the regularized error function plus $-\frac{1}{2}\lambda \eta$. This term is a constant, so minimizing the Lagrangian with respect to $\mathbf{w}$ will give the same $\mathbf{w}^*$ as minimizing the regularized error function. 
+\end{enumerate}
+
+\end{document}

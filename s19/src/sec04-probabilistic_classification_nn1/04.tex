@@ -1,0 +1,514 @@
+\documentclass[11pt,letterpaper]{article}
+
+\usepackage{common}
+\newboolean{solutionCopy}
+\setboolean{solutionCopy}{false} % Toggle between solution copy and distro
+
+\ifthenelse{\boolean{solutionCopy}}{
+  \includeversion{solution}
+}{
+  \excludeversion{solution}
+}
+\newcommand{\class}{C}
+\begin{document}
+
+\ifthenelse{\boolean{solutionCopy}}{
+\begin{center}
+{\LARGE CS 181 Spring 2018 Section 4\\
+Solution}
+\end{center}
+}{
+  \begin{center}
+{\LARGE CS 181 Spring 2018 Section 4}\\
+\end{center}
+}
+
+
+
+%\pagebreak
+%\newpage
+%\thispagestyle{empty}
+\mbox{}
+%\newpage
+%\mbox{}
+
+\section{Generative Models}
+
+
+A \textbf{generative model} is one that models the joint distribution $p(x,y)$. 
+This factors into $p(x|y)p(y)$. 
+\begin{itemize}
+    \item $p(y)$ is called the \textbf{class prior} and is always
+    a categorical distribution (generalization of a Bernoulli to multiple classes).
+    Do not confuse ``prior" with a Bayesian prior over model parameters.
+    $p(y)$ gives an a priori probability of an observation being a certain class, without even
+    considering the observation's features.
+    \item $p(x|y)$ is called the \textbf{class-conditional distribution} and
+    its form is model-specific.
+    $p(x|y)$ specifies how likely an observation (set of features) is given a class.
+\end{itemize}
+\noindent During classification, we are interested in picking the class $k$ that maximizes
+$p(y=k|\boldx)$. This conditional is related to the joint $p(\boldx, y)$ through Bayes' Rule: 
+\begin{align*}
+    p(y|\boldx) &= \frac{p(\boldx|y)p(y)}{p(\boldx)} \propto p(\boldx | y)p(y)
+\end{align*}
+$p(\boldx)$ is constant because it does not depend on the choice of class, so we can disregard it.
+
+\noindent Compare the above definition of generative models to logistic regression (introduced in section 3 notes and on T2).
+In logistic regression, you optimize a set of vectors $\mathbf{w}_k$ and classify an observation
+$\mathbf{x}$ with the class $k$ that maximizes the score $\mathbf{w}_k^\top\mathbf{x}$. Logistic regression
+is called a \textbf{discriminative model} because you directly optimize for model parameters and do not
+estimate the distribution of $p(x,y)$. \textbf{Brainstorm:} is this a shortcoming of logistic regression?
+
+
+\section{Naive Bayes}
+
+Naive Bayes is one type of generative model for classification.
+It's ``naive'' because we assume that each feature in
+$\boldx$ is independently distributed, conditioned on the class. This means
+that we can write $p(\mathbf{x}|y=k) =  \prod_{j=1}^D p(x_j|y=k)$ where
+$D$ is the number of features and $k$ is the class. Choosing to use
+Naive Bayes does not fully specify the model. One must still choose
+the particular distribution $p(x_j|y)$. Let's choose a Multinomial 
+class-conditional distribution over discrete feature counts. That is,
+\begin{align*}
+    p(\mathbf{x}_i | y=k; \bpi_k) &= \text{Mu}(\mathbf{x}_i | N_{i} = \sum_{j} x_{ij}, \bpi_k)
+    = \frac{N_i!}{\prod_{j=1}^D x_{ij}!} \prod_{j=1}^D \pi_{kj}^{x_{j}}
+    \propto \prod_{j=1}^D \pi_{kj}^{x_{j}}
+\end{align*}
+\noindent In this model, each class $k$ has a vector of probabilities over each of $D$ features.
+$$\bpi_{k} = [\pi_{k1}, \pi_{k2},\ldots,\pi_{kD}]$$
+This vector sums to one for each class $k$: $\sum_{j=1}^D \pi_{kj} = 1$.
+Two notes. First, notice that we drop the normalizing coefficient in the PMF.
+It does not affect our predictions and is specific to each $\mathbf{x}_i$, not $y$.
+Second, notice that this model is different than if each feature was Bernoulli
+distributed.
+
+\textbf{Intuition:} You can think of each observation $\mathbf{x}_i$ as the result of 
+rolling one of $K$ $D$-sided dice several times and recording how many times each side came up.
+These are our feature counts. Each die corresponds to a class and might have its own biases 
+toward particular sides (so seeing a high count for a given feature may be more likely 
+given one class than other) 
+
+Let's consider just two classes. Let $p(y=1) = \theta$ and $p(y=0) = (1 - \theta)$.
+One die might be more common overall, regardless of the features we observe in a particular
+$\mathbf{x}_i$. 
+
+We have specified the full model and the role of its 
+parameters $\theta$, $\bpi_0$, and $\bpi_1$. 
+Classification corresponds to identifying which of two dice generated $\mathbf{x}$.
+During prediction, we pick the $k$ that maximizes $p(y=k|x)$ for an observation $\mathbf{x}$.
+To be able to do this, we must estimate the parameters of our model from data.
+For MLE, we want to find $\theta, \bpi_0, \bpi_1$ that maximize the log-likelihood:
+%
+\begin{align*}
+ \theta^*,\bpi_0^*,\bpi_1^* &=
+    \argmax_{\theta, \bpi_0, \bpi_1} \sum_{i=1}^N \ln p(\boldx_i , y_i)\\
+    &=\argmax_{\theta,\bpi_0, \bpi_1}\sum_{i=1}^N 
+        \ln p(\boldx_i | y_i; \bpi_0, \bpi_1) + 
+        \sum_{i=1}^N  \ln p(y_i;\theta)\\
+    &=\argmax_{\theta, \bpi_0, \bpi_1} \sum_{i=1}^N \sum_{k \in \{0,1\}} 
+    \mathbb{I}\{y_i=k\}
+    \Bigg[\Big(\sum_{j=1}^D x_{ij} \ln \pi_{kj} \Big) + 
+    k \ln \theta + (1 - k) \ln(1 - \theta) \Bigg]
+\end{align*}
+
+The indicator $\mathbb{I}\{y_i=k\}$, the $k$ that multiplies $\ln\theta$ and the $1-k$ that multiplies $\ln(1 - \theta)$ in the last line
+are all  just used for notation tricks to make sure that our likelihood only evaluates $p(\mathbf{x},y)$ for each $\mathbf{x}$'s true class
+rather than both classes. This is used a lot, so make sure you see what is going on.
+
+Is NB a linear classifier? In the case of our Multinomial example, you can write the classifier
+in the form of $\mathbf{w}^\top\mathbf{x} + w_0$:
+
+  \begin{align*}
+    h(\boldx ) &= [\ln p(\boldx | y=1) + \ln p(y=1)] - [\ln p(\boldx | y=0) + \ln p(y=0)] \\ 
+    &= \big[\ln \prod_{j=1}^m \pi_{1j}^{x_j} - \ln \prod_{j=1}^m \pi_{0j}^{x_j} \big] + \big[\ln \theta - \ln (1-\theta)\big]   \\
+    &= \sum_{j=1}^m x_j \ln \frac{\pi_{1j}}{ \pi_{0j}} +  \ln \left(\frac{\theta} {1-\theta}\right)  \\
+    &= \boldx^\top \bold{ln}(\frac{\bpi_{1}}{ \bpi_{0}}) +  \ln \left(\frac{\theta} {1-\theta}\right) 
+  \end{align*} 
+%
+where $\bold{ln}(\boldq)$ for vector $\boldq$ applies $\ln$ element-wise, and 
+we write $\bpi_{1}/ \bpi_{0}$ to mean element-wise division.
+%
+The resulting equation is in the same form as linear regression, and
+in particular the decision boundary $h(\boldx)=0$ is linear in $\boldx$. 
+NB is not a linear classifier for all choice of the class-conditional distribution.
+
+
+\newpage
+
+
+\begin{enumerate}
+
+    
+\item {\bf {Naive Bayes Graphical Model}}\\
+\fbox{\parbox{\linewidth}{%
+In the notes above, we algebraically described Naive Bayes as a generative model.
+It's very helpful to also approach the problem graphically. The 
+language of \textbf{probabilistic graphical models} has become a rich tool for doing so.
+In such graphical models, each random variable gets a vertex, and conditional distributions
+are represented with directed edges between vertices. Repeated variables (e.g.
+$N$ datapoints) are placed on rectangular plates. 
+Consider the following (not Naive Bayes) example.
+We are using the \texttt{tikzbayesnet} library:\\
+
+\begin{center}
+    \begin{tikzpicture}
+    %Define nodes
+    \node[latent]                               (y) {$y$};
+    \node[latent, above=of y] (w) {$\mathbf{w}$};
+    \node[latent, above=of y]  (x) {$\mathbf{x}$};
+    \node[latent, right=2cm of y] (t) {$\tau$};
+
+     % Connect the nodes
+     \edge {x,w,t} {y} ; %
+
+     % Plates
+     \plate {yx} {(x)(y)} {$N$} ;
+
+     \end{tikzpicture}
+\end{center}
+
+\noindent Here, there are $N$ copies of $\mathbf{x}$ and $y$. $y$ is conditionally
+distributed given $\mathbf{x}$ and $\tau$.\\
+
+\noindent Draw a graphical model for Naive Bayes with $x_{ij}$ ($N \times D$ of these), 
+$y_i$ ($N$ of these), $\bpi_k$ ($K$ of these) and $\theta$ (you can think about there being
+$1$ or $K$ of these). Treat $\mathbf{x}$ and $y$ as random and treat the rest as fixed
+parameters. To specify a non-random parameter, draw it next to a dot without a vertex
+around it. Remember, in Naive Bayes, the class and the class-conditional parameters generate
+the observation.
+}}
+
+\begin{solution}
+\begin{sol}
+
+
+\begin{center}
+    \begin{tikzpicture}
+    % Define nodes
+    \node[latent] (x) {$x_{ij}$};
+    \node[latent, above=of x] (y) {$y_i$};
+    \node[const, right=3cm of x] (pi) {$\mathbf{\bullet}\bpi_k$};
+    \node[const, above=of y] (theta) {$\mathbf{\bullet}\theta$};
+    
+    % Plates
+    \plate {xij} {(x)} {$D \text{(indexed by j)}$};
+    \plate {xy} {(xij)(x)(y)} {$N \text{(indexed by i)}$};
+    \plate {piplate} {(pi)} {$K \text{(indexed by k)}$};
+    
+    % Connect the nodes
+
+    \edge {y} {x};
+    \edge {pi} {x};
+    \edge {theta} {y};
+
+
+    \end{tikzpicture}
+\end{center}
+
+
+
+
+
+\end{sol}
+\end{solution}
+
+\newpage 
+
+\item {\bf Redundant Features in Naive Bayes}\\
+\fbox{\parbox{\linewidth}{%
+Suppose, as in Bishop 4.2.3, that we use a Naive Bayes classifier to classify 
+binary feature vectors $\boldx \in \reals^D$ into two classes. 
+The class conditional distributions will then be of the form
+\begin{align*}
+p(\boldx \given y=C_k) = \prod_{j=1}^D \pi_{kj}^{x_j} \, (1-\pi_{kj})^{(1-x_j)}, 
+\tag{Bishop 4.81}
+\end{align*}
+where $x_j \in \{0,1\}$, and $\pi_{kj} = p(x_j=1 \given y=C_k)$. 
+This is a Bernoulli Naive Bayes, different from Multinomial model in the notes
+in that all the features are binary instead of representing count data.
+Assume also that  the class priors are $p(y=\class_1) = p(y=\class_2) = \frac{1}{2}$.
+\begin{itemize}
+\item[a.] How is the quantity $\ln(p(y=C_1\given \boldx)/p(y=C_2\given\boldx))$ 
+          used for classification of a new example $\boldx$?
+\item[b.] If $D=1$ (i.e., there is only one feature), 
+          use the equations above to write out 
+          $\ln \frac{p(y=\class_1 \given x)}{p(y=\class_2 \given x)}$ 
+          for a single binary feature $x$. 
+\item[c.] Now suppose we change our feature representation so that instead of using 
+          just a single feature, we use two redundant features.
+          (i.e., two features that always have the same value). 
+          With this feature representation, instead of $x$ we will use 
+          $\boldx = [ x, x]^\top$.  
+          What is $\ln \frac{p(y=\class_1 \given \boldx)}{p(y=\class_2 \given \boldx)}$ 
+          in terms of the value for $\ln \frac{p(y=\class_1 \given x)}{p(y=\class_2 \given x)}$ 
+          you calculated in part (a.)?
+\item[d.] Is this a bug or a feature?
+\end{itemize}
+}}
+
+\begin{solution}
+\begin{sol}
+
+\begin{itemize}
+\item[a.] We will predict class $C_1$ if $p(y=C_1\given\boldx)\geq p(y=C_2\given\boldx)$, 
+          and class $C_2$ otherwise. Equivalently, we will predict 
+          $C_1$ if $\ln(p(y=C_1\given\boldx)/p(y=C_2\given\boldx))\geq 0$,
+          and $C_2$ otherwise.
+\item[b.] Because the class priors are the same and the denominators cancel, 
+          we have $p(y=\class_1\given x)/p(y=\class_2\given x) 
+          = p(y=\class_1)p(x\given y=\class_1)/p(y=\class_2)
+          p(x\given y=\class_2)=p(x \given y=\class_1)/p(x \given y=\class_2)$,
+          and we have:
+          \begin{align*}
+          \ln \frac{p(y=\class_1 \given x)}{p(y=\class_2 \given x)} &=
+          \ln \frac{\pi_{11}^{x} \, (1-\pi_{11})^{(1-x)}}{\pi_{21}^{x} \, 
+          (1-\pi_{21})^{(1-x)}}\\
+          &= x \ln \pi_{11} + (1-x) \ln (1 - \pi_{11}) - x \ln \pi_{21} - 
+          (1-x) \ln (1 - \pi_{21})
+          \end{align*}
+\item[c.] Because the two features are identical, we will have 
+          \begin{align*}
+          \ln \frac{p(y=\class_1 \given \boldx)}{p(y=\class_2 \given \boldx)} 
+          &= \ln \frac{\left(\pi_{11}^{x} \, (1-\pi_{11})^{(1-x)}\right)^2}
+          {\left(\pi_{21}^{x} \, (1-\pi_{21})^{(1-x)}\right)^2}\\
+          &= \ln \left[ \left( \frac{\pi_{11}^{x} \, (1-\pi_{11})^{(1-x)}}{\pi_{21}^{x} 
+          \, (1-\pi_{21})^{(1-x)}} \right)^2 \right] \\
+           &= 2 \ln \frac{p(y=\class_1 \given x)}{p(y=\class_2 \given x)}
+         \end{align*}
+
+         (above, we use $x$ to mean either redundant feature in $\mathbf{x}$ and dropped the subscripts)
+
+\item[d.] This is a feature! We see that the classifier with the two identical
+          features has exactly the same behavior as the classifier with just a single
+          feature. In particular, 
+          \begin{align*}
+          \ln \frac{p(y=\class_1 \given \boldx)}{p(y=\class_2 \given \boldx)} \geq 0
+          \quad &\Leftrightarrow \quad 
+          \ln \frac{p(y=\class_1 \given x)}{p(y=\class_2 \given x)} \geq 0
+          \end{align*}
+
+          Note: it does not matter that there is a new constant 2 in front of the
+          expression. Only the sign is important for classification.
+\end{itemize}
+
+\end{sol}
+\end{solution}
+
+\newpage
+
+\item {\bf Shapes of Decision Boundaries - Part I}\\
+\fbox{\parbox{\linewidth}{%
+Consider now a generative  model with $K>2$ classes, and output label $\boldy$ encoded as a ``one hot'' vector of length $K$. 
+We adopt class prior $p(\boldy = C_k; \bpi) = \pi_k$ for all $k \in \{1, \ldots, K\}$ (where $\pi_k$ is a parameter of the prior).
+Let  $p(\boldx\given \boldy=C_k)$ denote the class-conditional density of features $\boldx$ (in this
+case for class $C_k$). Let the class-conditional probabilities be Gaussian distributions
+\begin{align*}
+p(\boldx \given  \boldy = C_k) = \mathcal{N}(\boldx \given   \bmu_k, \bSigma_k), \text{\ for\ }k \in \{1,\ldots, K\}
+\end{align*}
+
+We will predict the class of a new example $\boldx$ as the class with the
+highest conditional probability, $p(\boldy = C_k\given \boldx)$.
+Luckily, a little bird came to the window of your dorm,
+and claimed that you can classify an example $\boldx$ by finding the class
+that maximizes the following function:
+$$f_k(\boldx) = \ln(\pi_k)-\frac{1}{2}\ln(|\bSigma_k|)-\frac{1}{2}(\boldx - \bmu_k)^T\bSigma_k^{-1}(\boldx - \bmu_k).$$
+
+Derive this formula by comparing two different classes' conditional probabilities. What can we claim about the shape of the decision boundary given this formula?
+}}
+
+\begin{solution}
+\begin{sol}
+
+Let's start with the conditional probability:
+%
+\begin{align*}
+    p(\boldy = C_k\given \boldx) &=
+    \frac{p(\boldx\given \boldy = C_k)p(\boldy = C_k)}{\sum_\ell^K p(\boldx\given \boldy = C_\ell)p(\boldy = C_\ell)}\\
+    \intertext{\{We can take out the denominator since it will be the same for each class\}}
+    &\propto p(\boldx\given \boldy = C_k)p(\boldy = C_k)\\
+    &= \frac{1}{(2\pi)^{\frac{D}{2}}|\bSigma_k|^{\frac{1}{2}}}\exp{(-\frac{1}{2}(\boldx - \bmu_k)^T\bSigma_k^{-1}(\boldx - \bmu_k))}\pi_k\\
+    \intertext{\{We can factor out constants that will be shared across classes\}}
+    &\propto \frac{\pi_k}{|\bSigma_k|^{\frac{1}{2}}}\exp{(-\frac{1}{2}(\boldx - \bmu_k)^T\bSigma_k^{-1}(\boldx - \bmu_k))}\\
+    \intertext{\{We take the logarithm, which is a monotonically increasing function and won't change the maximum across classes\}}
+    &\propto \ln(\pi_k)-\frac{1}{2}\ln(|\bSigma_k|)-\frac{1}{2}(\boldx - \bmu_k)^T\bSigma_k^{-1}(\boldx - \bmu_k)
+\end{align*}
+
+Now, what can we say about the shape of our decision boundary?
+$(\boldx - \bmu_k)^T\bSigma_k^{-1}(\boldx - \bmu_k)$ gives us
+intuition about the shape of our decision boundary. We see it is
+quadratic.
+
+For further intuition, we can look at the other two terms to see what
+affects the probability of an example being classified to a given class. As the
+prior $\pi_k$ increases, we see that the probability increases, which
+fits our intuition. As the determinant of the covariance matrix $\bSigma_k$ increases, we
+see that the probability decreases, which also fits our intuition.
+
+\end{sol}
+\end{solution}
+
+\newpage
+
+\item {\bf Shapes of Decision Boundaries - Part II}\\
+\fbox{\parbox{\linewidth}{%
+Let's say the little bird comes back and now tells you  that every class has the same covariance matrix, and so $\bSigma_\ell = \bSigma_\ell'$ for all classes $C_\ell$ and $C_{\ell'}$. 
+Simplify this formula down further. What can we claim about the shape of the decision boundaries now?
+}}
+
+
+\begin{solution}
+\begin{sol}
+
+\vspace{1mm}
+Here was our original formula.
+\begin{align}
+\ln(\pi_k)-\frac{1}{2}\ln(|\bSigma_k|)-\frac{1}{2}(\boldx - \bmu_k)^T\bSigma_k^{-1}(\boldx - \bmu_k)
+\end{align}
+
+Given that all of the classes have the same covariance matrix, which we will write as $\bSigma$, we have:
+%
+\begin{align}
+    f_k(\boldx) &= \ln(\pi_k)-\frac{1}{2}\ln(|\bSigma|)-\frac{1}{2}(\boldx - \bmu_k)^T\bSigma^{-1}(\boldx - \bmu_k)\\
+    &= \ln(\pi_k)-\frac{1}{2}\ln(|\bSigma|)-\frac{1}{2}(\boldx - \bmu_k)^T(\bSigma^{-1}\boldx - \bSigma^{-1}\bmu_k)\\
+    &= \ln(\pi_k)-\frac{1}{2}\ln(|\bSigma|)-\frac{1}{2}(\boldx^T\bSigma^{-1}\boldx - \boldx^T\bSigma^{-1}\bmu_k - \bmu^T\bSigma^{-1}\boldx + \bmu^T\bSigma^{-1}\bmu_k)\\
+    &= \ln(\pi_k)-\frac{1}{2}\ln(|\bSigma|)-\frac{1}{2}(\boldx\bSigma^{-1}\boldx^T - 2\boldx^T\bSigma^{-1}\bmu_k + \bmu_k^T\bSigma^{-1}\bmu_k)\\
+    &= \ln(\pi_k)-\frac{1}{2}\ln(|\bSigma|)-\frac{1}{2}\boldx\bSigma^{-1}\boldx^T + \boldx^T\bSigma^{-1}\bmu_k - \frac{1}{2}\bmu_k^T\bSigma^{-1}\bmu_k
+    \intertext{\{We can drop $-\frac{1}{2}\ln(|\bSigma|)$ and $-\frac{1}{2}\boldx\bSigma^{-1}\boldx^T$ since they are class independent\}}
+    &\propto \ln(\pi_k) + \boldx^T\bSigma^{-1}\bmu_k - \frac{1}{2}\bmu_k^T\bSigma^{-1}\bmu_k
+\end{align}
+
+Thus, we conclude that we can adopt function
+\begin{align}
+    \tilde{f}_k(\boldx) &= \boldx^T\bSigma^{-1}\bmu_k - \frac{1}{2}\bmu_k^T\Sigma^{-1}\bmu_k + \ln(\pi_k)
+\end{align}
+
+Looking at this formula, we can see that our decision boundaries are
+no longer quadratic but linear. We've proven that if the classes share
+the same covariance matrix, our decision boundaries will be linear!
+You will see this yourselves when coding up the Gaussian model in T2 Q3.
+\end{sol}
+\end{solution}
+
+\end{enumerate}
+
+\newpage
+\section{Neural Networks}
+
+Recall that in the case of binary classification, we can think about
+neural network as being equivalent to logistic regression with
+parameterized, adaptive basis functions. Adaptive means that you don't need to specify a feature basis.
+We can train a matrix that linearly transforms the data, run the resulting vector through an element-wise
+non-linearity, potentially repeat this process, and then finally run logistic regression on the resulting vector,
+where the logistic regression itself has weights that need to be trained.
+
+Let's think about a neural network binary classifier with $\boldx\in 
+\mathbb{R}^2$ ($D=2$) and with a single two-dimensional hidden layer.
+
+For the non-linear activation function, 
+we use the {\it ReLU} function defined by the following:
+%
+\begin{align}
+\text{ReLU}(z) = \begin{cases} z & \text{if } z > 0 \\ 0 & \text{otherwise} \end{cases}
+\end{align}
+
+Let's consider a function $h$ defined by the following:
+%
+\begin{align}
+h({\bf x}) &= \boldw^\trans \bphi(\boldx) + w_0 \\
+           &= \boldw^\trans\textbf{ReLU}\left(\boldW^{hid} \boldx + \boldw_0^{hid}\right) + w_0,
+\end{align}
+%
+where example $\boldx \in \reals^{2 \times 1}$, 
+weights in the hidden layer $\boldW^{hid} \in \reals^{2 \times 2}$,
+bias in the hidden layer $\boldw^{hid}_0 \in \reals^{2 \times 1}$, 
+output weight vector $\boldw \in \reals^{2 \times 1}$, and
+output bias $w_0 \in \reals$. Everything within the \textbf{ReLU()}
+is the ``adaptive basis" and the parameters outside are that of the logistic regression model.
+
+\noindent Suppose we want to fit the following data:
+%
+\[\boldx_1 = \left(\begin{matrix} 1 \\ 1\end{matrix} \right)\:\: y_1 = 1, \hspace{1pc} \boldx_2 = \left(\begin{matrix} 1 \\ -1\end{matrix} \right)\:\: y_2 = -1\]
+\[\boldx_3 = \left(\begin{matrix} -1 \\ 1\end{matrix} \right)\:\: y_3 = -1, \hspace{1pc} \boldx_4 = \left(\begin{matrix} -1 \\ -1\end{matrix} \right)\:\: y_4 = 1\]
+
+This looks as follows (blue = 1, red = -1):
+%
+\begin{center}
+\begin{tikzpicture}[scale=.75]
+\fill [blue!60] (6, 6) circle (.15); 
+\fill [red!60] (6, 2) circle (.15);
+\fill [red!60] (2, 6) circle (.15);
+\fill [blue!60] (2, 2) circle (.15);
+\draw[<->] (4, 0) -- (4, 8);
+\draw[<->] (0, 4) -- (8, 4);
+\end{tikzpicture}
+\end{center}
+
+Why can't we solve this problem with a linear classifier?  What values
+of parameters $\boldW^{hid}, \boldw_0^{hid}, \boldw,$ and $w_0$ will allow the
+neural network to solve the problem? Show that your choice of parameters
+allows the network to correctly classify the data. 
+
+\noindent \textbf{Note:} You do not need to learn to find these weights systematically by hand.
+This is not very possible to do manually in general, but you might see something in this low-dimensional case.
+
+\noindent {\it Hint:} Think carefully about why we need a nonlinearity
+in finding a basis function for the examples.  What can the ReLU do
+for us? What does it do to various kinds of vectors? Think geometrically.
+
+\begin{solution}
+\begin{sol}
+
+\noindent We can solve the problem with
+\[\boldW^{hid} = \left(\begin{matrix} 1 & 1 \\ -1 & -1\end{matrix} \right), \hspace{1pc} \boldw_0^{hid} = \left( \begin{matrix} 0 \\ 0 \end{matrix} \right)\]
+\[\boldw = \left(\begin{matrix} 1 \\ 1 \end{matrix} \right), \hspace{1pc} w_0 = -1\]
+How does this solve the problem? Note that
+\[h(\boldx_1) = \left(\begin{matrix} 1 & 1 \end{matrix} 
+\right)\textbf{ReLU}\left(\begin{matrix} 2 \\ -2\end{matrix} \right) -1 = 1\]
+\[h(\boldx_2) = \left(\begin{matrix} 1 & 1 \end{matrix} 
+\right)\textbf{ReLU}\left(\begin{matrix} 0 \\ 0\end{matrix} \right) -1 = -1 \]
+\[h(\boldx_3) = \left(\begin{matrix} -1 & 1 \end{matrix} 
+\right)\textbf{ReLU}\left(\begin{matrix} 0 \\ 0\end{matrix} \right) -1 = -1\]
+\[h(\boldx_4) = \left(\begin{matrix} 1 & 1 \end{matrix} 
+\right)\textbf{ReLU}\left(\begin{matrix} -2 \\ 2\end{matrix} \right) -1 = 1\]
+
+This works because we have a ReLU! Having a nonlinearity 
+in the activation function allows us to
+find a linear classifier for these examples in the new basis.
+
+What did we do? With $\boldW^{hid}$, we 
+map our data linearly so it looks as follows:
+
+\begin{center}
+\begin{tikzpicture}[scale=.75]
+\fill [blue!60] (6, 2) circle (.15);
+\fill [blue!60] (2, 6) circle (.15);
+\draw[<->] (4, 0) -- (4, 8);
+\draw[<->] (0, 4) -- (8, 4);
+\fill [red!60] (4, 4) circle (.15); 
+\end{tikzpicture}
+\end{center}
+
+This is great, but still not linearly separable. Applying the ReLU, however, maps
+this picture to the following one:
+
+\begin{center}
+\begin{tikzpicture}[scale=.75]
+\fill [blue!60] (6, 4) circle (.15);
+\fill [blue!60] (4, 6) circle (.15);
+\draw[<->] (4, 0) -- (4, 8);
+\draw[<->] (0, 4) -- (8, 4);
+\fill [red!60] (4, 4) circle (.15); 
+\end{tikzpicture}
+\end{center}
+
+Now our data is linearly separable and we can classify the points correctly. 
+Note that the parameters we chose here are not unique (far from it). The 
+important thing is that we transformed our input space well enough 
+to apply a linear classifier.
+
+\end{sol}
+\end{solution}
+
+\end{document}
